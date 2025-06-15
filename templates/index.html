@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>מחשבון השקעות</title>
+  <style>
+    body { font-family: Arial, sans-serif; direction: rtl; max-width: 700px; margin: auto; }
+    input, button { width: 100%; margin-bottom: 10px; padding: 8px; }
+    .result { background: #f0f0f0; padding: 15px; margin-top: 20px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <h1>מחשבון השקעות</h1>
+  <form method="POST">
+    <label>סכום התחלתי:<br><input type="number" name="principal" step="0.01" required></label>
+    <label>הפקדה חודשית:<br><input type="number" name="monthly" step="0.01" required></label>
+    <label>אחוז ריבית שנתי:<br><input type="number" name="rate" step="0.01" required></label>
+    <label>מספר שנים:<br><input type="number" name="years" required></label>
+    <button type="submit">חשב</button>
+  </form>
+
+  {% if result %}
+    {% if result.error %}
+      <p style="color:red;">שגיאה: {{ result.error }}</p>
+    {% else %}
+      <div class="result">
+        <p><strong>סכום סופי:</strong> {{ result.final }} ש"ח</p>
+        <p><strong>השקעה כוללת:</strong> {{ result.invested }} ש"ח</p>
+        <p><strong>רווח כולל:</strong> {{ result.profit }} ש"ח</p>
+        <h3>רווח שנתי:</h3>
+        <ul>
+          {% for val in result.yearly %}
+            שנה {{ loop.index }}: {{ val }} ש"ח
+            {% endfor %}
+
+        </ul>
+        <img src="data:image/png;base64,{{ chart }}" width="100%">
+      </div>
+    {% endif %}
+  {% endif %}
+</body>
+</html>

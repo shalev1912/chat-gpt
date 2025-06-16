@@ -1,3 +1,0 @@
-Flask==3.1.1
-matplotlib==3.10.3
-gunicorn==23.0.0

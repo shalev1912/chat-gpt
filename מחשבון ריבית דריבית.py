@@ -1,60 +1,122 @@
-from flask import Flask, render_template, request
-import matplotlib.pyplot as plt
-import io
-import base64
+<!DOCTYPE html>
+<html lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>מחשבון ריבית דריבית</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      direction: rtl;
+      background: url('https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?auto=format&fit=crop&w=1350&q=80') no-repeat center center fixed;
+      background-size: cover;
+      padding: 20px;
+      text-align: center;
+      color: #333;
+    }
+    .calculator {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 25px;
+      border-radius: 20px;
+      display: inline-block;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      max-width: 400px;
+    }
+    input, button {
+      margin: 10px 0;
+      padding: 12px;
+      width: 90%;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    button {
+      background-color: #4a90e2;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #357ab8;
+    }
+    .result, .history {
+      margin-top: 20px;
+      font-size: 16px;
+      text-align: right;
+    }
+    .history {
+      background-color: #f7faff;
+      border: 1px solid #cce0ff;
+      border-radius: 10px;
+      padding: 10px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .history-entry {
+      border-bottom: 1px solid #eee;
+      padding: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>מחשבון ריבית דריבית</h1>
+  <div class="calculator">
+    <label>סכום ראשוני (₪):</label>
+    <input type="number" id="principal" placeholder="לדוגמה: 10000">
 
-app = Flask(__name__)
+    <label>הפקדה חודשית קבועה (₪):</label>
+    <input type="number" id="monthly" placeholder="לדוגמה: 500">
 
-@app.route("/", methods=["GET", "POST"])
-def index():
-    result = None
-    chart = None
+    <label>ריבית שנתית (%):</label>
+    <input type="number" id="rate" placeholder="לדוגמה: 5">
 
-    if request.method == "POST":
-        try:
-            P = float(request.form['principal'])
-            M = float(request.form['monthly'])
-            r = float(request.form['rate']) / 100
-            n = int(request.form['years'])
-            months = n * 12
-            balances = []
-            total = P
-            monthly_rate = r / 12
-            for month in range(months):
-                total = total * (1 + monthly_rate) + M
-                balances.append(total)
+    <label>שנים:</label>
+    <input type="number" id="years" placeholder="לדוגמה: 10">
 
-            invested = P + M * months
-            profit = total - invested
-            yearly_profits = []
-            for year in range(1, n + 1):
-                month_index = year * 12 - 1
-                amount = balances[month_index]
-                invested_to_date = P + M * 12 * year
-                yearly_profits.append(round(amount - invested_to_date, 2))
+    <button onclick="calculateCompoundInterest()">חשב</button>
+    <button onclick="clearHistory()" style="background:#aaa">נקה היסטוריה</button>
 
-            fig, ax = plt.subplots()
-            ax.plot(range(1, months + 1), balances)
-            ax.set_title("התפתחות ההשקעה")
-            ax.set_xlabel("חודש")
-            ax.set_ylabel("ש\"ח")
-            ax.grid(True)
-            img = io.BytesIO()
-            plt.savefig(img, format='png')
-            img.seek(0)
-            chart = base64.b64encode(img.read()).decode()
+    <div class="result" id="output"></div>
+    <div class="history" id="history"></div>
+  </div>
 
-            result = {
-                'final': round(total, 2),
-                'invested': round(invested, 2),
-                'profit': round(profit, 2),
-                'yearly': yearly_profits
-            }
+  <script>
+    function calculateCompoundInterest() {
+      const P = parseFloat(document.getElementById('principal').value);
+      const PMT = parseFloat(document.getElementById('monthly').value);
+      const r = parseFloat(document.getElementById('rate').value) / 100;
+      const n = 12; // חודשי
+      const t = parseFloat(document.getElementById('years').value);
 
-        except Exception as e:
-            result = {"error": str(e)}
+      if (isNaN(P) || isNaN(PMT) || isNaN(r) || isNaN(t)) {
+        document.getElementById('output').textContent = 'נא למלא את כל השדות בצורה תקינה.';
+        return;
+      }
 
-    return render_template("index.html", result=result, chart=chart)
+      const futureValuePrincipal = P * Math.pow(1 + r / n, n * t);
+      const futureValueMonthly = PMT * ((Math.pow(1 + r / n, n * t) - 1) / (r / n));
+      const total = futureValuePrincipal + futureValueMonthly;
+      const totalInvested = P + PMT * t * 12;
+      const interestEarned = total - totalInvested;
 
-if __name__ == "__main__":
-    app.run(debug=True)
+      const resultText =
+        `סה"כ לאחר ${t} שנים: ₪${total.toFixed(2)}<br>` +
+        `סך כל ההפקדות: ₪${totalInvested.toFixed(2)}<br>` +
+        `רווח שהצטבר: ₪${interestEarned.toFixed(2)}`;
+
+      document.getElementById('output').innerHTML = resultText;
+
+      const historyEntry = document.createElement('div');
+      historyEntry.className = 'history-entry';
+      historyEntry.innerHTML = resultText;
+      document.getElementById('history').prepend(historyEntry);
+    }
+
+    function clearHistory() {
+      document.getElementById('history').innerHTML = '';
+    }
+  </script>
+</body>
+</html>
+

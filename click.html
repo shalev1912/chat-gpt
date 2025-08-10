@@ -34,6 +34,9 @@
       color: white;
       cursor: pointer;
       transition: background 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      user-select: none;
     }
 
     #click-btn:hover {
@@ -45,6 +48,7 @@
       font-size: 2rem;
       font-weight: 700;
       text-shadow: 1px 1px 4px rgba(0,0,0,0.5);
+      min-height: 50px;
     }
 
     .home-btn {
@@ -77,56 +81,105 @@
       border-radius: 15px;
       box-shadow: 0 8px 25px rgba(0,0,0,0.3);
       user-select: none;
+      transition: transform 0.3s ease;
+    }
+
+    /* אפקט קליק - פלאש קצר */
+    #click-feedback {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2rem;
+      color: #ffdd57;
+      font-weight: 900;
+      pointer-events: none;
+      opacity: 0;
+      user-select: none;
+      text-shadow: 0 0 10px #ffdd57;
+      transition: opacity 0.5s ease;
     }
   </style>
 </head>
 <body>
   <a href="home.html" class="home-btn">← חזור למסך הבית</a>
   <h1>משחק קליקים</h1>
-  <button id="click-btn">לחץ כאן!</button>
+  <button id="click-btn">
+    לחץ כאן!
+    <span id="click-feedback"></span>
+  </button>
   <div id="score">נקודות: 0</div>
 
   <!-- תמונת החיה -->
   <img id="animal-img" src="https://i.imgur.com/8Km9tLL.png" alt="חיה" />
 
+  <audio id="click-sound" src="https://freesound.org/data/previews/256/256113_3263906-lq.mp3" preload="auto"></audio>
+
   <script>
     const btn = document.getElementById('click-btn');
     const scoreDisplay = document.getElementById('score');
     const animalImg = document.getElementById('animal-img');
+    const clickFeedback = document.getElementById('click-feedback');
+    const clickSound = document.getElementById('click-sound');
 
-    // מערך של תמונות חיות (תמונות לדוגמה - תוכל לשנות לקישורים שלך)
+    // מערך של תמונות חיות (ניתן להחליף)
     const animals = [
-  "https://i.imgur.com/2XfR7EZ.png",  // חתול
-  "https://i.imgur.com/8yvKX2x.png",  // כלב
-  "https://i.imgur.com/Fa1nOSr.png",  // ציפור
-  "https://i.imgur.com/7MrdcRU.png",  // ארנב
-  "https://i.imgur.com/0G0bYkZ.png"   // דוב
-];
+      "https://i.imgur.com/2XfR7EZ.png",  // חתול
+      "https://i.imgur.com/8yvKX2x.png",  // כלב
+      "https://i.imgur.com/Fa1nOSr.png",  // ציפור
+      "https://i.imgur.com/7MrdcRU.png",  // ארנב
+      "https://i.imgur.com/0G0bYkZ.png"   // דוב
+    ];
 
-    // מקבל נקודות מ-localStorage אם יש, אחרת 0
+    // מקבל ניקוד מ-localStorage אם יש, אחרת 0
     let score = parseInt(localStorage.getItem('clickerScore')) || 0;
-
-    // מציג את הניקוד בהתחלה
     scoreDisplay.textContent = `נקודות: ${score}`;
     updateAnimalImage(score);
 
     btn.addEventListener('click', () => {
-      score++;
+      // תגמול נקודות אקראי (1-10) ליותר עניין
+      const pointsGained = Math.floor(Math.random() * 10) + 1;
+      score += pointsGained;
       scoreDisplay.textContent = `נקודות: ${score}`;
-
-      // שומר ל-localStorage
       localStorage.setItem('clickerScore', score);
 
+      // עדכון תמונת החיה בהתאם
       updateAnimalImage(score);
+
+      // הצגת פידבק ויזואלי של +נקודות
+      showClickFeedback(`+${pointsGained}`);
+
+      // השמעת סאונד קליק
+      playClickSound();
+
+      // אנימציה קלה לתמונת החיה (קפיצה קטנה)
+      animalImg.style.transform = 'scale(1.1)';
+      setTimeout(() => {
+        animalImg.style.transform = 'scale(1)';
+      }, 150);
     });
 
     function updateAnimalImage(score) {
-      // בוחן באיזה טווח 50 נקודות אנחנו נמצאים
-      // מספר החיות במערך
       const numAnimals = animals.length;
-      // מחשב אינדקס: כל 50 נקודות עוברים לחיה הבאה, חוזר לאפס אם יותר מדי
       const index = Math.floor(score / 50) % numAnimals;
       animalImg.src = animals[index];
+    }
+
+    function showClickFeedback(text) {
+      clickFeedback.textContent = text;
+      clickFeedback.style.opacity = 1;
+      clickFeedback.style.transform = 'translate(-50%, -150%) scale(1.2)';
+      setTimeout(() => {
+        clickFeedback.style.opacity = 0;
+        clickFeedback.style.transform = 'translate(-50%, -100%) scale(1)';
+      }, 700);
+    }
+
+    function playClickSound() {
+      // מוודא שהסאונד יושמע גם אם לוחצים מהר
+      clickSound.pause();
+      clickSound.currentTime = 0;
+      clickSound.play().catch(() => {});
     }
   </script>
 </body>

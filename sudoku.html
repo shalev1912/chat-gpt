@@ -101,7 +101,7 @@
   }
   #message {
     margin-top: 10px;
-    height: 22px;
+    height: 24px;
     text-align: center;
     font-weight: 700;
     color: #ff5555;
@@ -176,9 +176,6 @@
 
 <script>
 (() => {
-  // סט פונקציות וסטרקטורות בסיסיות עבור סודוקו מתקדם
-
-  // יצירת לוח 9x9 ריק
   const SIZE = 9;
   const BLOCK = 3;
 
@@ -193,17 +190,15 @@
   const solveBtn = document.getElementById('solveBtn');
   const homeLink = document.getElementById('homeLink');
 
-  // מצב המשחק - מחזיק את הלוח הנוכחי, סימוני העיפרון והיסטוריית צעדים
   let board = [];
   let initialBoard = [];
-  let pencilMarks = []; // מערך דו-ממדי עם מערכי אפשרויות בכל תא
-  let selectedCell = null; // [row,col]
+  let pencilMarks = [];
+  let selectedCell = null;
   let history = [];
   let redoStack = [];
   let timerInterval = null;
   let startTime = null;
 
-  // פונקציה ליצירת לוח HTML דינמי עם תאים
   function createBoard() {
     gameDiv.innerHTML = '';
     const table = document.createElement('table');
@@ -214,20 +209,12 @@
         const td = document.createElement('td');
         td.dataset.row = r;
         td.dataset.col = c;
-
-        // גבולות בלוקים עבים
         if ((c+1) % BLOCK === 0 && c !== SIZE - 1) td.classList.add('block-right');
         if ((r+1) % BLOCK === 0 && r !== SIZE - 1) td.classList.add('block-bottom');
-
-        // למנוע סימון טקסט
         td.style.userSelect = "none";
-
-        // הוסף אלמנט pencil marks קטן בתוך התא
         const pencilDiv = document.createElement('div');
         pencilDiv.className = 'pencil-marks';
         td.appendChild(pencilDiv);
-
-        // מאזין ללחיצה על תא
         td.addEventListener('click', () => selectCell(r,c));
         tr.appendChild(td);
       }
@@ -236,32 +223,26 @@
     gameDiv.appendChild(table);
   }
 
-  // בחירת תא, סימון כבחור נוכחי
-  function selectCell(row,col) {
-    clearMessage();
-    if(selectedCell){
-      const [sr, sc] = selectedCell;
-      const prevCell = getCellElement(sr, sc);
-      prevCell.classList.remove('selected');
-    }
-    selectedCell = [row,col];
-    const cell = getCellElement(row,col);
-    cell.classList.add('selected');
-  }
-
-  // מחזיר את תא ה-td לפי שורה ועמודה
   function getCellElement(row,col){
     return gameDiv.querySelector(`td[data-row="${row}"][data-col="${col}"]`);
   }
 
-  // הצגת הלוח לפי המערכים board ו-pencilMarks
+  function selectCell(row,col) {
+    clearMessage();
+    if(selectedCell){
+      const [sr, sc] = selectedCell;
+      getCellElement(sr, sc).classList.remove('selected');
+    }
+    selectedCell = [row,col];
+    getCellElement(row,col).classList.add('selected');
+  }
+
   function renderBoard() {
     for(let r=0; r<SIZE; r++){
       for(let c=0; c<SIZE; c++){
         const cell = getCellElement(r,c);
         cell.textContent = '';
         cell.classList.remove('preset', 'invalid');
-        // אם יש מספר בהתחלה - סימן כאילו preset ולא ניתן לשינוי
         if(initialBoard[r][c] !== 0){
           cell.textContent = initialBoard[r][c];
           cell.classList.add('preset');
@@ -270,17 +251,12 @@
             cell.textContent = board[r][c];
           }
         }
-        // הצגת סימוני עיפרון
         const pencilDiv = cell.querySelector('.pencil-marks');
         pencilDiv.innerHTML = '';
         if(pencilMarks[r][c].size > 0 && board[r][c] === 0) {
           for(let n=1; n<=9; n++){
             const span = document.createElement('span');
-            if(pencilMarks[r][c].has(n)) {
-              span.textContent = n;
-            } else {
-              span.textContent = '';
-            }
+            span.textContent = pencilMarks[r][c].has(n) ? n : '';
             pencilDiv.appendChild(span);
           }
         }
@@ -288,19 +264,14 @@
     }
   }
 
-  // בדיקה אם הכנסת מספר חוקית (שורה, עמודה ובלוק)
   function isValidMove(row, col, num, currentBoard = board) {
     if(num < 1 || num > 9) return false;
-
-    // שורה
     for(let c=0; c<SIZE; c++){
       if(c !== col && currentBoard[row][c] === num) return false;
     }
-    // עמודה
     for(let r=0; r<SIZE; r++){
       if(r !== row && currentBoard[r][col] === num) return false;
     }
-    // בלוק 3x3
     const br = Math.floor(row / BLOCK)*BLOCK;
     const bc = Math.floor(col / BLOCK)*BLOCK;
     for(let rr=br; rr<br+BLOCK; rr++){
@@ -311,7 +282,6 @@
     return true;
   }
 
-  // בדיקת אם הלוח מלא ותקין (האם המשחק הושלם)
   function isBoardComplete() {
     for(let r=0; r<SIZE; r++){
       for(let c=0; c<SIZE; c++){
@@ -321,7 +291,100 @@
     return true;
   }
 
-  // הכנסת מספר לתא נבחר
+  function showMessage(msg){
+    messageEl.textContent = msg;
+  }
+
+  function clearMessage(){
+    messageEl.textContent = '';
+  }
+
+  function saveHistory(){
+    // שמור העתק של הלוח והפנצ'לים להיסטוריה (ל-Undo)
+    const snapshot = {
+      board: board.map(r => r.slice()),
+      pencilMarks: pencilMarks.map(r => r.map(s => new Set(s))),
+      selectedCell: selectedCell ? [...selectedCell] : null,
+    };
+    history.push(snapshot);
+    // נקי את ערמת ה-Redo
+    redoStack = [];
+    updateUndoRedoButtons();
+  }
+
+  function undo(){
+    if(history.length === 0) return;
+    const currentSnapshot = {
+      board: board.map(r => r.slice()),
+      pencilMarks: pencilMarks.map(r => r.map(s => new Set(s))),
+      selectedCell: selectedCell ? [...selectedCell] : null,
+    };
+    redoStack.push(currentSnapshot);
+
+    const prev = history.pop();
+    board = prev.board.map(r => r.slice());
+    pencilMarks = prev.pencilMarks.map(r => r.map(s => new Set(s)));
+    selectedCell = prev.selectedCell;
+    renderBoard();
+    updateSelection();
+    updateUndoRedoButtons();
+    clearMessage();
+  }
+
+  function redo(){
+    if(redoStack.length === 0) return;
+    const currentSnapshot = {
+      board: board.map(r => r.slice()),
+      pencilMarks: pencilMarks.map(r => r.map(s => new Set(s))),
+      selectedCell: selectedCell ? [...selectedCell] : null,
+    };
+    history.push(currentSnapshot);
+
+    const next = redoStack.pop();
+    board = next.board.map(r => r.slice());
+    pencilMarks = next.pencilMarks.map(r => r.map(s => new Set(s)));
+    selectedCell = next.selectedCell;
+    renderBoard();
+    updateSelection();
+    updateUndoRedoButtons();
+    clearMessage();
+  }
+
+  function updateUndoRedoButtons(){
+    undoBtn.disabled = history.length === 0;
+    redoBtn.disabled = redoStack.length === 0;
+  }
+
+  function updateSelection(){
+    // הסר בחירה ישנה והוסף חדשה
+    document.querySelectorAll('td.selected').forEach(td => td.classList.remove('selected'));
+    if(selectedCell){
+      const [r,c] = selectedCell;
+      getCellElement(r,c).classList.add('selected');
+    }
+  }
+
+  function clearPencilMarks(){
+    if(!selectedCell) {
+      showMessage('בחר תא כדי לנקות סימוני עיפרון');
+      return;
+    }
+    const [r,c] = selectedCell;
+    if(initialBoard[r][c] !== 0) {
+      showMessage('לא ניתן לשנות סימוני עיפרון בתא ראשוני');
+      return;
+    }
+    if(pencilMarks[r][c].size === 0){
+      showMessage('אין סימוני עיפרון לנקות בתא זה');
+      return;
+    }
+    pencilMarks[r][c].clear();
+    saveHistory();
+    renderBoard();
+    clearMessage();
+  }
+
+  // הכנסת מספר בתא הנבחר - num בין 1 ל-9 או 0 למחיקה
   function inputNumber(num, pencil=false) {
     if(!selectedCell){
       showMessage('בחר תא לפני הכנסת מספר');
@@ -333,7 +396,10 @@
       return;
     }
     if(pencil){
-      // עדכון סימוני עיפרון - הוספה או הסרה
+      if(num === 0) {
+        showMessage('בחר מספר חוקי לסימון עיפרון');
+        return;
+      }
       if(pencilMarks[r][c].has(num)){
         pencilMarks[r][c].delete(num);
       } else {
@@ -341,15 +407,80 @@
       }
       saveHistory();
       renderBoard();
+      clearMessage();
       return;
     }
     // הכנסת מספר רגילה
     if(num === 0) {
-      // מחיקת מספר
       board[r][c] = 0;
       pencilMarks[r][c].clear();
       saveHistory();
       renderBoard();
+      clearMessage();
       return;
     }
     if(!isValidMove(r,c,num)){
+      // סימון שגיאה לזמן קצר
+      const cell = getCellElement(r,c);
+      cell.classList.add('invalid');
+      setTimeout(() => cell.classList.remove('invalid'), 600);
+      showMessage('הזנת מספר לא חוקית');
+      return;
+    }
+    board[r][c] = num;
+    pencilMarks[r][c].clear();
+    saveHistory();
+    renderBoard();
+    clearMessage();
+    if(isBoardComplete()){
+      clearInterval(timerInterval);
+      showMessage('כל הכבוד! השלמת את הלוח 🎉');
+    }
+  }
+
+  // מפתח לפיצול לוח - לייצר לוח פתרון או התחלה
+  function copyBoard(b){
+    return b.map(r => r.slice());
+  }
+
+  // אלגוריתם פתרון (Backtracking)
+  function solveSudoku(b=board) {
+    for(let r=0; r<SIZE; r++){
+      for(let c=0; c<SIZE; c++){
+        if(b[r][c] === 0){
+          for(let n=1; n<=9; n++){
+            if(isValidMove(r,c,n,b)){
+              b[r][c] = n;
+              if(solveSudoku(b)) return true;
+              b[r][c] = 0;
+            }
+          }
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  // יצירת משחק חדש - טוען פאזל מוכן מראש
+  // כאן השתמשתי בפאזלים דוגמה לפי רמת קושי
+  const puzzles = {
+    easy: [
+      [0,0,2, 6,0,0, 7,0,1],
+      [6,8,0, 0,7,0, 0,9,0],
+      [1,9,0, 0,0,4, 5,0,0],
+      [8,2,0, 1,0,0, 0,4,0],
+      [0,0,4, 6,0,2, 9,0,0],
+      [0,5,0, 0,0,3, 0,2,8],
+      [0,0,9, 3,0,0, 0,7,4],
+      [0,4,0, 0,5,0, 0,3,6],
+      [7,0,3, 0,0,1, 8,0,0]
+    ],
+    medium: [
+      [0,2,0, 6,0,8, 0,0,0],
+      [5,8,0, 0,0,9, 7,0,0],
+      [0,0,0, 0,4,0, 0,0,0],
+      [3,7,0, 0,0,0, 5,0,0],
+      [6,0,0, 0,0,0, 0,0,4],
+      [0,0,8, 0,0,0, 0,1,3],
+      [0,0,0, 0,2,0

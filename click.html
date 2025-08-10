@@ -50,7 +50,7 @@
     .home-btn {
       position: fixed;
       top: 20px;
-      left: 20px; /* כי הכיוון rtl, left יהיה בצד שמאל */
+      left: 20px;
       background: white;
       color: #182848;
       padding: 8px 14px;
@@ -67,6 +67,17 @@
       background: #4b6cb7;
       color: white;
     }
+
+    /* תמונת החיה */
+    #animal-img {
+      margin-top: 30px;
+      width: 200px;
+      height: 200px;
+      object-fit: contain;
+      border-radius: 15px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+      user-select: none;
+    }
   </style>
 </head>
 <body>
@@ -75,15 +86,48 @@
   <button id="click-btn">לחץ כאן!</button>
   <div id="score">נקודות: 0</div>
 
+  <!-- תמונת החיה -->
+  <img id="animal-img" src="https://i.imgur.com/8Km9tLL.png" alt="חיה" />
+
   <script>
     const btn = document.getElementById('click-btn');
     const scoreDisplay = document.getElementById('score');
-    let score = 0;
+    const animalImg = document.getElementById('animal-img');
+
+    // מערך של תמונות חיות (תמונות לדוגמה - תוכל לשנות לקישורים שלך)
+    const animals = [
+      "https://i.imgur.com/8Km9tLL.png",    // חתול
+      "https://i.imgur.com/JQ9XQsi.png",    // כלב
+      "https://i.imgur.com/WpQzQ5H.png",    // ציפור
+      "https://i.imgur.com/OWHZIGs.png",    // ארנב
+      "https://i.imgur.com/7pxQmtk.png"     // דוב
+    ];
+
+    // מקבל נקודות מ-localStorage אם יש, אחרת 0
+    let score = parseInt(localStorage.getItem('clickerScore')) || 0;
+
+    // מציג את הניקוד בהתחלה
+    scoreDisplay.textContent = `נקודות: ${score}`;
+    updateAnimalImage(score);
 
     btn.addEventListener('click', () => {
       score++;
       scoreDisplay.textContent = `נקודות: ${score}`;
+
+      // שומר ל-localStorage
+      localStorage.setItem('clickerScore', score);
+
+      updateAnimalImage(score);
     });
+
+    function updateAnimalImage(score) {
+      // בוחן באיזה טווח 50 נקודות אנחנו נמצאים
+      // מספר החיות במערך
+      const numAnimals = animals.length;
+      // מחשב אינדקס: כל 50 נקודות עוברים לחיה הבאה, חוזר לאפס אם יותר מדי
+      const index = Math.floor(score / 50) % numAnimals;
+      animalImg.src = animals[index];
+    }
   </script>
 </body>
 </html>

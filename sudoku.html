@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+<meta charset="UTF-8" />
+<title>משחק סודוקו</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    direction: rtl;
+    max-width: 480px;
+    margin: 20px auto;
+    text-align: center;
+  }
+  h1 {
+    margin-bottom: 5px;
+  }
+  #sudoku {
+    border-collapse: collapse;
+    margin: 10px auto;
+  }
+  #sudoku td {
+    border: 1px solid #555;
+    width: 40px;
+    height: 40px;
+    text-align: center;
+    vertical-align: middle;
+  }
+  #sudoku input {
+    width: 38px;
+    height: 38px;
+    text-align: center;
+    font-size: 20px;
+    border: none;
+    outline: none;
+    direction: ltr;
+  }
+  /* להדגיש ריבועים 3x3 */
+  #sudoku tr:nth-child(3n) td {
+    border-bottom: 3px solid #333;
+  }
+  #sudoku td:nth-child(3n) {
+    border-right: 3px solid #333;
+  }
+  /* להבדיל בין תאים ניתנים לעריכה לתאים קבועים */
+  .fixed {
+    background-color: #ddd;
+    font-weight: bold;
+  }
+  #controls {
+    margin: 10px 0;
+  }
+  button, select {
+    font-size: 16px;
+    padding: 6px 12px;
+    margin: 0 5px;
+    cursor: pointer;
+  }
+  #timer {
+    font-size: 18px;
+    margin: 10px 0;
+  }
+  #score {
+    font-size: 20px;
+    margin-top: 10px;
+    color: green;
+    font-weight: bold;
+  }
+  #message {
+    margin-top: 10px;
+    font-size: 18px;
+    color: red;
+  }
+</style>
+</head>
+<body>
+
+<h1>משחק סודוקו</h1>
+
+<div id="controls">
+  רמת קושי:
+  <select id="difficulty">
+    <option value="easy">קל</option>
+    <option value="medium">בינוני</option>
+    <option value="hard">קשה</option>
+    <option value="expert">מומחה</option>
+  </select>
+  <button id="startBtn">התחל משחק</button>
+  <button id="toggleTimerBtn">הפעל/כבה טיימר</button>
+</div>
+
+<div id="timer">זמן: 00:00</div>
+<table id="sudoku"></table>
+
+<div id="score">נקודות: 0</div>
+<div id="message"></div>
+
+<script>
+(() => {
+  // לוחות התחלה לפי רמות
+  const puzzles = {
+    easy: [
+      "530070000600195000098000060800060003400803001700020006060000280000419005000080079",
+      // מספרים לפי שורה אחת ברצף, 0 = ריק
+    ],
+    medium: [
+      "600120384008459072000006005000264030070080006940003000310000050089700000502000190"
+    ],
+    hard: [
+      "000000907000420180000705026100904000050000040000507009920108000034059000507000000"
+    ],
+    expert: [
+      "048000000000005700030402000005070300000000010004060000000300209006100000000000840"
+    ]
+  };
+
+  // פתרונות ללוחות - חייב להיות תואם
+  // לצורך הפשטות כאן פתרונות מלאים לכל לוח
+  const solutions = {
+    easy: [
+      "534678912672195348198342567859761423426853791713924856961537284287419635345286179"
+    ],
+    medium: [
+      "695127384138459672247836915581264739372981456946573821319642587789715243562398190"
+    ],
+    hard: [
+      "435286917967421385218795426176934258853672149294517639921148763384659712547823961"
+    ],
+    expert: [
+      "948731265621895743735462891185274396379686514264159378417383259896121457523497684"
+    ]
+  };
+
+  const sudokuTable = document.getElementById("sudoku");
+  const difficultySelect = document.getElementById("difficulty");
+  const startBtn = document.getElementById("startBtn");
+  const toggleTimerBtn = document.getElementById("toggleTimerBtn");
+  const timerDiv = document.getElementById("timer");
+  const scoreDiv = document.getElementById("score");
+  const messageDiv = document.getElementById("message");
+
+  let currentPuzzle = "";
+  let currentSolution = "";
+  let timerInterval = null;
+  let seconds = 0;
+  let timerActive = false;
+  let score = 0;
+
+  function formatTime(sec) {
+    const m = String(Math.floor(sec / 60)).padStart(2, "0");
+    const s = String(sec % 60).padStart(2, "0");
+    return `${m}:${s}`;
+  }
+
+  function startTimer() {
+    if (timerActive) return;
+    timerActive = true;
+    timerInterval = setInterval(() => {
+      seconds++;
+      timerDiv.textContent = "זמן: " + formatTime(seconds);
+    }, 1000);
+  }
+
+  function stopTimer() {
+    timerActive = false;
+    clearInterval(timerInterval);
+  }
+
+  function resetTimer() {
+    stopTimer();
+    seconds = 0;
+    timerDiv.textContent = "זמן: 00:00";
+  }
+
+  function createGrid() {
+    sudokuTable.innerHTML = "";
+    for (let row = 0; row < 9; row++) {
+      const tr = document.createElement("tr");
+      for (let col = 0; col < 9; col++) {
+        const td = document.createElement("td");
+        const index = row * 9 + col;
+        const val = currentPuzzle.charAt(index);
+        if (val !== "0") {
+          td.textContent = val;
+          td.classList.add("fixed");
+        } else {
+          const input = document.createElement("input");
+          input.type = "text";
+          input.maxLength = 1;
+          input.pattern = "[1-9]";
+          input.dataset.index = index;
+          input.addEventListener("input", onInputChange);
+          input.addEventListener("keydown", onInputKeyDown);
+          td.appendChild(input);
+        }
+        tr.appendChild(td);
+      }
+      sudokuTable.appendChild(tr);
+    }
+  }
+
+  // מניעת הזנת תווים לא תקינים
+  function onInputKeyDown(e) {
+    if (
+      !(
+        (e.key >= "1" && e.key <= "9") ||
+        e.key === "Backspace" ||
+        e.key === "Delete" ||
+        e.key === "ArrowLeft" ||
+        e.key === "ArrowRight" ||
+        e.key === "ArrowUp" ||
+        e.key === "ArrowDown" ||
+        e.key === "Tab"
+      )
+    ) {
+      e.preventDefault();
+    }
+  }
+
+  // בדיקה עם כל שינוי
+  function onInputChange(e) {
+    const input = e.target;
+    if (input.value.length > 1) {
+      input.value = input.value.charAt(0);
+    }
+    if (!/^[1-9]$/.test(input.value)) {
+      input.value = "";
+      return;
+    }
+    checkWin();
+  }
+
+  function getUserBoard() {
+    let board = "";
+    for (let i = 0; i < 81; i++) {
+      const cell = sudokuTable.querySelector(`[data-index="${i}"]`);
+      if (cell) {
+        const val = cell.value;
+        board += val ? val : "0";
+      } else {
+        board += currentPuzzle.charAt(i);
+      }
+    }
+    return board;
+  }
+
+  function checkWin() {
+    const userBoard = getUserBoard();
+    if (userBoard.includes("0")) {
+      messageDiv.textContent = "";
+      return false;
+    }
+    if (userBoard === currentSolution) {
+      messageDiv.style.color = "green";
+      messageDiv.textContent = "כל הכבוד! פתרת את הסודוקו!";
+      stopTimer();
+      calcScore();
+      disableInputs();
+      return true;
+    } else {
+      messageDiv.style.color = "red";
+      messageDiv.textContent = "נראה שיש טעות. בדוק שוב.";
+      return false;
+    }
+  }
+
+  function disableInputs() {
+    sudokuTable.querySelectorAll("input").forEach((input) => {
+      input.disabled = true;
+    });
+  }
+
+  function calcScore() {
+    const difficulty = difficultySelect.value;
+    // ניקוד לפי רמה: קל=10, בינוני=30, קשה=60, מומחה=100 מינוס זמן בשניות
+    let baseScore = 0;
+    switch (difficulty) {
+      case "easy":
+        baseScore = 10;
+        break;
+      case "medium":
+        baseScore = 30;
+        break;
+      case "hard":
+        baseScore = 60;
+        break;
+      case "expert":
+        baseScore = 100;
+        break;
+    }
+    // ניקוד יורד עם הזמן, מינימום 1 נקודה
+    let finalScore = Math.max(1, baseScore - Math.floor(seconds / 10));
+    score += finalScore;
+    scoreDiv.textContent = `נקודות: ${score}`;
+  }
+
+  function startGame() {
+    messageDiv.textContent = "";
+    scoreDiv.textContent = `נקודות: ${score}`;
+    resetTimer();
+    if (timerActive) startTimer();
+    const difficulty = difficultySelect.value;
+    // לוקח את הלוח הראשון מהרשימה (אפשר להוסיף יותר לוחות בעתיד)
+    currentPuzzle = puzzles[difficulty][0];
+    currentSolution = solutions[difficulty][0];
+    createGrid();
+  }
+
+  startBtn.addEventListener("click", () => {
+    startGame();
+  });
+
+  toggleTimerBtn.addEventListener("click", () => {
+    if (timerActive) {
+      stopTimer();
+    } else {
+      startTimer();
+    }
+  });
+
+  // אתחול ראשוני - לא מתחיל משחק עד הלחיצה על התחלה
+  scoreDiv.textContent = `נקודות: ${score}`;
+  timerDiv.textContent = "זמן: 00:00";
+})();
+</script>
+
+</body>
+</html>

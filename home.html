@@ -1,102 +1,373 @@
 <!DOCTYPE html>
-<html lang="he">
+<html lang="he" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <title>קטלוג משחקים - עיצוב מודרני</title>
-  <link href="https://fonts.googleapis.com/css2?family=Assistant&family=Rubik&display=swap" rel="stylesheet" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>מרכז המשחקים</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&display=swap" rel="stylesheet">
+
   <style>
-    body {
-      font-family: 'Rubik', 'Assistant', Arial, sans-serif;
-      direction: rtl;
-      margin: 20px;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: #333;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+    :root{
+      --bg1: #ff9a9e;
+      --bg2: #fad0c4;
+      --card-bg: rgba(255,255,255,0.06);
+      --glass: rgba(255,255,255,0.08);
+      --accent: #ffd166;
+      --text: #ffffff;
     }
 
-    h1 {
-      text-align: center;
-      color: white;
-      margin-bottom: 30px;
-      text-shadow: 1px 1px 5px rgba(0,0,0,0.3);
-      user-select: none;
+    /* Reset */
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    body{
+      font-family: 'Heebo', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      overflow-x:hidden;
+      background: linear-gradient(120deg, var(--bg1), var(--bg2));
+      animation: bgShift 12s ease-in-out infinite alternate;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:30px;
     }
 
-    .game-list {
-      display: flex;
-      gap: 25px;
-      justify-content: center;
-      flex-wrap: wrap;
-      max-width: 900px;
-      width: 100%;
+    /* gradient animation */
+    @keyframes bgShift {
+      0%{filter: hue-rotate(0deg)}
+      50%{filter: hue-rotate(25deg) saturate(1.05)}
+      100%{filter: hue-rotate(-10deg)}
     }
 
-    .game-item {
-      background: linear-gradient(145deg, #f0f4ff, #d9e2ff);
-      border-radius: 15px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-      padding: 15px;
-      width: 220px;
-      text-align: center;
-      cursor: pointer;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    .wrap{
+      width:100%;
+      max-width:1100px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+      border-radius:18px;
+      padding:22px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      position:relative;
+      overflow:hidden;
     }
 
-    .game-item:hover {
-      transform: translateY(-10px);
-      box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+    header.top {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:18px;
+    }
+    .brand {
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+    .logo {
+      width:54px;height:54px;border-radius:12px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
+      display:flex;align-items:center;justify-content:center;
+      box-shadow: inset 0 -6px 14px rgba(0,0,0,0.12);
+      flex-shrink:0;
+    }
+    .logo svg{width:34px;height:34px;opacity:0.95}
+    h1{
+      font-size:20px;margin:0;line-height:1;
+      letter-spacing:0.2px;
+    }
+    p.subtitle{margin:0;color:rgba(255,255,255,0.85);font-size:13px}
+
+    /* tools */
+    .tools {
+      display:flex;gap:8px;align-items:center;
+    }
+    .btn {
+      background:var(--glass);
+      border:1px solid rgba(255,255,255,0.06);
+      padding:8px 12px;border-radius:10px;color:var(--text);
+      text-decoration:none;font-weight:500;font-size:14px;cursor:pointer;
+      display:inline-flex;gap:8px;align-items:center;
+      transition:transform .18s ease, background .18s ease, box-shadow .18s ease;
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn:hover{transform:translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.2)}
+
+    /* content grid */
+    .games {
+      display:grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap:18px;
     }
 
-    .game-item img {
-      width: 100%;
-      height: 120px;
-      object-fit: cover;
-      border-radius: 12px;
-      transition: transform 0.3s ease;
-      user-select: none;
+    @media (max-width:760px){
+      .games{grid-template-columns: 1fr;}
+      header.top{flex-direction:column;align-items:flex-start;gap:10px}
     }
 
-    .game-item:hover img {
-      transform: scale(1.05);
+    .card {
+      background: var(--card-bg);
+      border-radius:14px;
+      padding:14px;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      transition: transform .22s cubic-bezier(.2,.9,.3,1), box-shadow .22s;
+      text-decoration:none;color:inherit;
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+    .card:hover{ transform: translateY(-8px) scale(1.01); box-shadow: 0 20px 40px rgba(0,0,0,0.28)}
+    .thumb {
+      width:120px;height:88px;border-radius:10px;flex-shrink:0;
+      display:flex;align-items:center;justify-content:center;
+      background:linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+      position:relative; overflow:hidden;
+    }
+    .thumb svg{width:80px;height:80px}
+
+    .meta{flex:1; text-align:right}
+    .meta h3{margin:0;font-size:18px}
+    .meta p{margin:6px 0 0;color:rgba(255,255,255,0.8);font-size:13px}
+
+    .play {
+      display:inline-flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;
+      background:linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+      border:1px solid rgba(255,255,255,0.06);
+      cursor:pointer;font-weight:600;
+      transition: transform .14s ease, box-shadow .14s ease;
+    }
+    .play:active{transform:translateY(1px)}
+    .play:hover{box-shadow: 0 10px 25px rgba(0,0,0,0.28); transform:translateY(-3px)}
+
+    /* small tag */
+    .tag {
+      font-size:12px;padding:6px 8px;border-radius:8px;background:rgba(0,0,0,0.18);
+      color: #fff;border:1px solid rgba(255,255,255,0.04);
     }
 
-    .play-btn {
-      margin-top: 12px;
-      padding: 10px 16px;
-      background: linear-gradient(90deg, #4b6cb7, #182848);
-      color: white;
-      border: none;
-      border-radius: 25px;
-      box-shadow: 0 4px 15px rgba(75, 108, 183, 0.6);
-      font-weight: 600;
-      transition: background 0.3s ease, box-shadow 0.3s ease;
-      user-select: none;
+    footer.sitefoot{
+      margin-top:16px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.03);
+      display:flex;gap:10px;align-items:center;justify-content:space-between;
+      font-size:13px;color:rgba(255,255,255,0.85)
     }
 
-    .play-btn:hover {
-      background: linear-gradient(90deg, #182848, #4b6cb7);
-      box-shadow: 0 6px 25px rgba(24, 40, 72, 0.8);
+    /* focus styles for accessibility */
+    a:focus, button:focus { outline: 3px solid rgba(255,255,255,0.12); outline-offset:3px; border-radius:8px; }
+
+    /* decorative floating shapes */
+    .float-shape{
+      position:absolute; border-radius:50%;
+      filter: blur(28px); opacity:0.12; pointer-events:none;
     }
+    .s1{width:260px;height:260px; right:-60px; top:-80px; background: #ffffff;}
+    .s2{width:140px;height:140px; left:-40px; bottom:-40px; background:#fff;}
+    .s3{width:90px;height:90px; right:120px; bottom: -20px; background:#ffffff;}
+
+    /* particle canvas fullscreen (hidden by default) */
+    #particle-canvas{
+      position:absolute; left:0; top:0; width:100%; height:100%; pointer-events:none; z-index:0;
+      display:none;
+    }
+
+    /* small helper */
+    .advanced-toggle{display:flex;gap:8px;align-items:center}
+    .small-muted{font-size:12px;color:rgba(255,255,255,0.75)}
   </style>
 </head>
 <body>
-  <h1>קטלוג משחקים</h1>
-  <div class="game-list">
-    <div class="game-item" onclick="location.href='click.html'">
-      <img src="https://picsum.photos/200/120?random=1" alt="משחק קליקים" />
-      <h3>משחק קליקים</h3>
-      <p>לחץ על הכפתור כדי להרוויח נקודות!</p>
-      <button class="play-btn">שחק עכשיו</button>
-    </div>
-    <div class="game-item" onclick="location.href='trivia.html'">
-      <img src="https://picsum.photos/200/120?random=2" alt="משחק טריוויה" />
-      <h3>משחק טריוויה</h3>
-      <p>ענה על שאלות ונסה להגיע לציון גבוה!</p>
-      <button class="play-btn">שחק עכשיו</button>
-    </div>
+  <div class="wrap" role="main">
+    <!-- decorative shapes -->
+    <div class="float-shape s1"></div>
+    <div class="float-shape s2"></div>
+    <div class="float-shape s3"></div>
+
+    <header class="top">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">
+          <!-- simple game controller icon -->
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 12c0 0 1.5-6 9-6s9 6 9 6-1.5 6-9 6S3 12 3 12z" stroke="white" stroke-opacity="0.92" stroke-width="1.2" fill="rgba(255,255,255,0.03)"/>
+            <circle cx="8.8" cy="11.2" r="1.2" fill="white"/>
+            <rect x="14.6" y="9.6" width="1.2" height="1.2" rx="0.2" fill="white"/>
+            <rect x="13" y="11.2" width="1.2" height="1.2" rx="0.2" fill="white"/>
+          </svg>
+        </div>
+        <div>
+          <h1>מרכז המשחקים</h1>
+          <p class="subtitle">קישור מהיר למשחקים — קליקים וטריוויה • עיצוב נקי ורספונסיבי</p>
+        </div>
+      </div>
+
+      <div class="tools" aria-hidden="false">
+        <div class="advanced-toggle">
+          <button id="particlesToggle" class="btn" title="הפעל/כבה אפקט חלקיקים">הפעל אפקטים</button>
+          <button id="downloadBtn" class="btn" onclick="downloadIndex()">להורדה</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="games" aria-label="רשימת משחקים">
+      <!-- Clicker Card -->
+      <a class="card" href="https://shalev1912.github.io/chat-gpt/click.html" role="link" aria-label="פתח משחק הקליקים">
+        <div class="thumb" aria-hidden="true">
+          <!-- clicker SVG -->
+          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="4" y="4" width="56" height="56" rx="10" fill="rgba(255,255,255,0.06)"/>
+            <path d="M20 40 L24 36 L28 40 L32 36 L36 40" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+            <circle cx="40" cy="22" r="8" fill="white" opacity="0.95"/>
+            <path d="M36 22h2v2h-2z" fill="#333" />
+          </svg>
+        </div>
+        <div class="meta">
+          <h3>משחק הקליקים</h3>
+          <p>לחץ וצבור נקודות — שדרוגים, אפקטים ומהר!</p>
+        </div>
+        <div>
+          <div class="play">שחק ▶</div>
+        </div>
+      </a>
+
+      <!-- Trivia Card -->
+      <a class="card" href="https://shalev1912.github.io/chat-gpt/trivia.html" role="link" aria-label="פתח משחק הטריוויה">
+        <div class="thumb" aria-hidden="true">
+          <!-- trivia SVG -->
+          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="4" y="4" width="56" height="56" rx="10" fill="rgba(255,255,255,0.06)"/>
+            <path d="M20 38h24v2H20z" fill="white"/>
+            <circle cx="34" cy="22" r="8" fill="white" opacity="0.95"/>
+            <path d="M34 18c0 2-2 2-2 4" stroke="#333" stroke-width="2" stroke-linecap="round" fill="none"/>
+            <circle cx="34" cy="30" r="1.6" fill="#333"/>
+          </svg>
+        </div>
+        <div class="meta">
+          <h3>משחק הטריוויה</h3>
+          <p>ענה על שאלות, בדוק ידע וזכה בנקודות!</p>
+        </div>
+        <div>
+          <div class="play">שחק ▶</div>
+        </div>
+      </a>
+    </section>
+
+    <footer class="sitefoot">
+      <div>© <span id="year"></span> כל הזכויות שמורות • <span class="small-muted">שמור לך כעת</span></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="tag">גרסה: 1.0</span>
+      </div>
+    </footer>
+
+    <!-- particle canvas -->
+    <canvas id="particle-canvas" aria-hidden="true"></canvas>
   </div>
+
+  <script>
+    // set year
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Particle effect (simple) - toggleable
+    const canvas = document.getElementById('particle-canvas');
+    const ctx = canvas.getContext && canvas.getContext('2d');
+    let particles = [];
+    let running = false;
+    let rafId = null;
+
+    function resizeCanvas(){
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+    }
+
+    function makeParticle(x,y){
+      return {
+        x, y,
+        vx: (Math.random()-0.5)*1.2,
+        vy: (Math.random()-1.5)*1.2,
+        life: 60 + Math.random()*40,
+        r: 2 + Math.random()*3,
+        hue: 200 + Math.random()*60
+      }
+    }
+
+    function spawnBurst(){
+      const w = canvas.width, h = canvas.height;
+      for(let i=0;i<18;i++){
+        particles.push(makeParticle( Math.random()*w, Math.random()*h ));
+      }
+    }
+
+    function loopParticles(){
+      if(!running) return;
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      for(let i=particles.length-1;i>=0;i--){
+        const p = particles[i];
+        p.life--;
+        p.x += p.vx; p.y += p.vy;
+        p.vy += 0.02;
+        const alpha = Math.max(0, p.life/100);
+        ctx.beginPath();
+        ctx.fillStyle = 'hsla('+ (p.hue) +',80%,'+ (50 - (p.r*3)) +'%, '+ alpha +')';
+        ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+        ctx.fill();
+        if(p.life <= 0 || p.y > canvas.height + 20){ particles.splice(i,1); }
+      }
+      // natural spawn
+      if(Math.random() < 0.03) spawnBurst();
+      rafId = requestAnimationFrame(loopParticles);
+    }
+
+    // toggle handler
+    const toggleBtn = document.getElementById('particlesToggle');
+    toggleBtn.addEventListener('click', () => {
+      running = !running;
+      if(running){
+        canvas.style.display = 'block';
+        resizeCanvas();
+        particles = [];
+        spawnBurst();
+        loopParticles();
+        toggleBtn.textContent = 'כבה אפקטים';
+      } else {
+        cancelAnimationFrame(rafId);
+        canvas.style.display = 'none';
+        particles = [];
+        toggleBtn.textContent = 'הפעל אפקטים';
+      }
+    });
+
+    // handle resize
+    window.addEventListener('resize', () => {
+      if(running) resizeCanvas();
+    });
+
+    // small UX: pressing Enter on card follows link
+    document.querySelectorAll('.card').forEach(card => {
+      card.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          card.click();
+        }
+      });
+      // make cards focusable for keyboard
+      card.setAttribute('tabindex','0');
+    });
+
+    // download current index HTML content (simple helper)
+    function downloadIndex(){
+      const html = document.documentElement.outerHTML;
+      const blob = new Blob([html], {type: 'text/html;charset=utf-8'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'index.html';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+    window.downloadIndex = downloadIndex;
+
+    // small accessibility: prefer-reduced-motion
+    if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+      document.querySelectorAll('*').forEach(n => n.style.transitionDuration = '0s');
+    }
+  </script>
 </body>
 </html>

@@ -3,48 +3,86 @@
 <head>
   <meta charset="UTF-8" />
   <title>משחק קליקים</title>
+  <link href="https://fonts.googleapis.com/css2?family=Assistant&family=Rubik&display=swap" rel="stylesheet" />
   <style>
-    body { font-family: Arial, sans-serif; direction: rtl; text-align: center; padding: 20px; }
-    h1 { margin-bottom: 20px; }
-    #score { font-size: 48px; margin: 20px 0; }
-    button { font-size: 24px; padding: 15px 30px; cursor: pointer; border-radius: 8px; }
-    a { display: block; margin-top: 30px; color: #007bff; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    /* אזור למודעה */
-    #ad-container { margin-top: 40px; }
+    body {
+      font-family: 'Rubik', 'Assistant', Arial, sans-serif;
+      direction: rtl;
+      margin: 20px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      justify-content: center;
+      user-select: none;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      text-shadow: 1px 1px 5px rgba(0,0,0,0.4);
+    }
+
+    #click-btn {
+      padding: 15px 30px;
+      font-size: 1.3rem;
+      border: none;
+      border-radius: 30px;
+      background: linear-gradient(90deg, #4b6cb7, #182848);
+      box-shadow: 0 6px 25px rgba(24, 40, 72, 0.8);
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    #click-btn:hover {
+      background: linear-gradient(90deg, #182848, #4b6cb7);
+    }
+
+    #score {
+      margin-top: 25px;
+      font-size: 2rem;
+      font-weight: 700;
+      text-shadow: 1px 1px 4px rgba(0,0,0,0.5);
+    }
+
+    .home-btn {
+      position: fixed;
+      top: 20px;
+      left: 20px; /* כי הכיוון rtl, left יהיה בצד שמאל */
+      background: white;
+      color: #182848;
+      padding: 8px 14px;
+      border-radius: 20px;
+      text-decoration: none;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      transition: background 0.3s ease, color 0.3s ease;
+      user-select: none;
+      z-index: 100;
+    }
+
+    .home-btn:hover {
+      background: #4b6cb7;
+      color: white;
+    }
   </style>
 </head>
 <body>
+  <a href="index.html" class="home-btn">← חזור למסך הבית</a>
   <h1>משחק קליקים</h1>
-  <div>ניקוד: <span id="score">0</span></div>
   <button id="click-btn">לחץ כאן!</button>
-
-  <a href="home.html">← חזרה לקטלוג</a>
-
-  <div id="ad-container">
-    <!-- כאן להוסיף פרסומת Google AdSense -->
-    <!-- דוגמה: -->
-    <!--
-    <ins class="adsbygoogle"
-         style="display:block; text-align:center;"
-         data-ad-layout="in-article"
-         data-ad-format="fluid"
-         data-ad-client="ca-pub-XXXXXXXXXXXX"
-         data-ad-slot="YYYYYYYYYY"></ins>
-    <script>
-         (adsbygoogle = window.adsbygoogle || []).push({});
-    </script>
-    -->
-  </div>
+  <div id="score">נקודות: 0</div>
 
   <script>
+    const btn = document.getElementById('click-btn');
+    const scoreDisplay = document.getElementById('score');
     let score = 0;
-    const scoreEl = document.getElementById('score');
-    const clickBtn = document.getElementById('click-btn');
 
-    clickBtn.addEventListener('click', () => {
+    btn.addEventListener('click', () => {
       score++;
-      scoreEl.textContent = score;
+      scoreDisplay.textContent = `נקודות: ${score}`;
     });
   </script>
 </body>

@@ -1,439 +1,355 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>משחק סודוקו - חדשני וקליל</title>
-  <style>
-    body {
-      font-family: 'Arial', sans-serif;
-      background: linear-gradient(135deg, #6b73ff 0%, #000dff 100%);
-      color: white;
-      margin: 0; padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-    }
-    h1 {
-      margin-bottom: 0.2em;
-      font-weight: 700;
-    }
-    #controls {
-      margin-bottom: 15px;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-    select, button {
-      font-size: 16px;
-      padding: 8px 12px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-    select {
-      min-width: 120px;
-    }
-    button {
-      background-color: #4a4a9f;
-      color: white;
-      min-width: 100px;
-    }
-    button:hover {
-      background-color: #6262c4;
-    }
-    button#homeBtn {
-      background-color: #6c757d;
-      min-width: 80px;
-      font-size: 18px;
-    }
-    button#homeBtn:hover {
-      background-color: #5a6268;
-    }
-    #timer {
-      font-size: 18px;
-      font-weight: 600;
-      margin-left: 10px;
-      user-select: none;
-    }
-    table {
-      border-collapse: collapse;
-      margin-top: 10px;
-      user-select: none;
-    }
-    td {
-      border: 1.5px solid #aaa;
-      width: 44px;
-      height: 44px;
-      text-align: center;
-      vertical-align: middle;
-      font-size: 20px;
-      background: rgba(255,255,255,0.1);
-      cursor: pointer;
-      position: relative;
-    }
-    /* עיצוב תאים בבלוקים 3x3 */
-    td.block-border-right {
-      border-right: 3px solid white;
-    }
-    td.block-border-bottom {
-      border-bottom: 3px solid white;
-    }
-    td input {
-      width: 100%;
-      height: 100%;
-      font-size: 20px;
-      border: none;
-      text-align: center;
-      background: transparent;
-      color: white;
-      font-weight: 600;
-    }
-    td input:focus {
-      outline: 2px solid #ffd166;
-      background: rgba(255, 255, 255, 0.15);
-    }
-    /* תאים שהמשתמש לא יכול לשנות */
-    td.prefilled {
-      background: rgba(255, 255, 255, 0.25);
-      font-weight: 700;
-      cursor: default;
-    }
-    /* שגיאה */
-    td.error input {
-      background-color: #ff4c4caa;
-    }
-    /* הודעה בסיום */
-    #message {
-      margin-top: 15px;
-      font-size: 18px;
-      font-weight: 700;
-      color: #ffd166;
-    }
-    @media (max-width: 480px) {
-      td {
-        width: 32px;
-        height: 32px;
-        font-size: 16px;
-      }
-      select, button {
-        font-size: 14px;
-        padding: 6px 10px;
-      }
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>סודוקו מתקדם</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Heebo&display=swap');
+  body {
+    font-family: 'Heebo', sans-serif;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    margin: 0; padding: 0;
+    display: flex; flex-direction: column; align-items: center;
+    min-height: 100vh;
+  }
+  h1 {
+    margin-top: 20px;
+    margin-bottom: 5px;
+  }
+  #game {
+    margin: 20px auto;
+    background: rgba(0,0,0,0.25);
+    border-radius: 15px;
+    padding: 15px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  }
+  table {
+    border-collapse: collapse;
+    margin: 10px auto;
+  }
+  td {
+    width: 50px; height: 50px;
+    text-align: center;
+    vertical-align: middle;
+    border: 1px solid #555;
+    font-size: 24px;
+    font-weight: 700;
+    cursor: pointer;
+    position: relative;
+    background: rgba(255,255,255,0.05);
+    user-select: none;
+  }
+  td.preset {
+    color: #aaddff;
+    font-weight: 900;
+    cursor: default;
+    background: rgba(0,0,0,0.3);
+  }
+  td.invalid {
+    background: #ff4d4d;
+    animation: blink 0.5s ease 2;
+  }
+  td.selected {
+    background: rgba(255,255,255,0.2);
+  }
+  /* עיצוב בלוקים 3x3 */
+  td.block-right {
+    border-right: 3px solid #888;
+  }
+  td.block-bottom {
+    border-bottom: 3px solid #888;
+  }
+  /* pencil marks */
+  .pencil-marks {
+    font-size: 10px;
+    color: rgba(255,255,255,0.6);
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 46px; height: 46px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    pointer-events: none;
+  }
+  .pencil-marks span {
+    text-align: center;
+    line-height: 14px;
+  }
+  /* controls */
+  #controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  button {
+    padding: 10px 15px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: none;
+    background: #4a4a8a;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    transition: background 0.3s ease;
+  }
+  button:hover {
+    background: #7a7add;
+  }
+  #message {
+    margin-top: 10px;
+    height: 22px;
+    text-align: center;
+    font-weight: 700;
+    color: #ff5555;
+    min-height: 24px;
+  }
+  #timer {
+    margin-top: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #ccc;
+    user-select: none;
+  }
+  #difficulty {
+    margin: 10px auto 0 auto;
+    text-align: center;
+  }
+  #difficulty select {
+    padding: 6px 10px;
+    font-size: 16px;
+    border-radius: 6px;
+    border: none;
+    background: #555;
+    color: white;
+    cursor: pointer;
+  }
+  #homeLink {
+    margin-top: 20px;
+    color: #aaddff;
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 16px;
+    user-select: none;
+  }
+  #homeLink:hover {
+    color: #fff;
+  }
+  /* Animations */
+  @keyframes blink {
+    0%, 100% { background-color: #ff4d4d; }
+    50% { background-color: rgba(255,77,77,0.6); }
+  }
+</style>
 </head>
 <body>
+<h1>סודוקו מתקדם</h1>
 
-  <h1>משחק סודוקו</h1>
+<div id="difficulty">
+  רמת קושי:
+  <select id="difficultySelect">
+    <option value="easy" selected>קל</option>
+    <option value="medium">בינוני</option>
+    <option value="hard">קשה</option>
+  </select>
+  <button id="newGameBtn">התחל משחק חדש</button>
+</div>
 
-  <div id="controls" role="region" aria-label="בקרות המשחק">
-    <label for="difficulty" style="user-select:none;">רמת קושי:</label>
-    <select id="difficulty" aria-label="בחר רמת קושי">
-      <option value="easy" selected>קל</option>
-      <option value="medium">בינוני</option>
-      <option value="hard">קשה</option>
-    </select>
+<div id="game" aria-label="לוח סודוקו" role="application" tabindex="0">
+  <!-- הלוח יווצר פה דינמית -->
+</div>
 
-    <button id="newGameBtn" aria-label="התחל משחק חדש">התחל משחק</button>
-    <button id="timerToggle" aria-pressed="false" aria-label="הפעל/כבה טיימר">הפעל טיימר</button>
-    <div id="timer" aria-live="polite" aria-atomic="true">00:00</div>
-    <button id="homeBtn" aria-label="חזור למסך הבית" title="חזרה למסך הבית">🏠 בית</button>
-  </div>
+<div id="controls" aria-label="שליטה במשחק">
+  <button id="undoBtn" title="בטל צעד אחרון">Undo ↩</button>
+  <button id="redoBtn" title="חזור על צעד שבוטל">Redo ↪</button>
+  <button id="clearPencilBtn" title="נקה סימוני אפשרויות">נקה סימוני עיפרון</button>
+  <button id="solveBtn" title="פתור את הפאזל אוטומטית">פתור אוטומטית</button>
+</div>
 
-  <table id="sudoku-grid" role="grid" aria-label="לוח סודוקו" tabindex="0"></table>
+<div id="message" aria-live="polite" role="alert"></div>
+<div id="timer" aria-label="שעון עצר">זמן: 00:00</div>
 
-  <div id="message" role="alert" aria-live="assertive"></div>
+<div id="homeLink" tabindex="0" role="link" aria-label="חזור למסך הבית">← חזרה למסך הבית</div>
 
 <script>
 (() => {
-  const easyBoard = [
-    [0,0,3, 0,2,0, 6,0,0],
-    [9,0,0, 3,0,5, 0,0,1],
-    [0,0,1, 8,0,6, 4,0,0],
-    [0,0,8, 1,0,2, 9,0,0],
-    [7,0,0, 0,0,0, 0,0,8],
-    [0,0,6, 7,0,8, 2,0,0],
-    [0,0,2, 6,0,9, 5,0,0],
-    [8,0,0, 2,0,3, 0,0,9],
-    [0,0,5, 0,1,0, 3,0,0]
-  ];
-  const mediumBoard = [
-    [0,2,0, 6,0,8, 0,0,0],
-    [5,8,0, 0,0,9, 7,0,0],
-    [0,0,0, 0,4,0, 0,0,0],
-    [3,7,0, 0,0,0, 5,0,0],
-    [6,0,0, 0,0,0, 0,0,4],
-    [0,0,8, 0,0,0, 0,1,3],
-    [0,0,0, 0,2,0, 0,0,0],
-    [0,0,9, 8,0,0, 0,3,6],
-    [0,0,0, 3,0,6, 0,9,0]
-  ];
-  const hardBoard = [
-    [0,0,0, 0,0,0, 0,0,0],
-    [0,0,0, 0,0,3, 0,8,5],
-    [0,0,1, 0,2,0, 0,0,0],
-    [0,0,0, 5,0,7, 0,0,0],
-    [0,0,4, 0,0,0, 1,0,0],
-    [0,9,0, 0,0,0, 0,0,0],
-    [5,0,0, 0,0,0, 0,7,3],
-    [0,0,2, 0,1,0, 0,0,0],
-    [0,0,0, 0,4,0, 0,0,9]
-  ];
+  // סט פונקציות וסטרקטורות בסיסיות עבור סודוקו מתקדם
 
-  const boardElem = document.getElementById('sudoku-grid');
-  const difficultySelect = document.getElementById('difficulty');
+  // יצירת לוח 9x9 ריק
+  const SIZE = 9;
+  const BLOCK = 3;
+
+  const gameDiv = document.getElementById('game');
+  const messageEl = document.getElementById('message');
+  const timerEl = document.getElementById('timer');
+  const difficultySelect = document.getElementById('difficultySelect');
   const newGameBtn = document.getElementById('newGameBtn');
-  const timerToggle = document.getElementById('timerToggle');
-  const timerDisplay = document.getElementById('timer');
-  const homeBtn = document.getElementById('homeBtn');
-  const message = document.getElementById('message');
+  const undoBtn = document.getElementById('undoBtn');
+  const redoBtn = document.getElementById('redoBtn');
+  const clearPencilBtn = document.getElementById('clearPencilBtn');
+  const solveBtn = document.getElementById('solveBtn');
+  const homeLink = document.getElementById('homeLink');
 
-  let currentBoard = [];
-  let solutionBoard = [];
-  let timer = null;
-  let timerSeconds = 0;
-  let timerRunning = false;
+  // מצב המשחק - מחזיק את הלוח הנוכחי, סימוני העיפרון והיסטוריית צעדים
+  let board = [];
+  let initialBoard = [];
+  let pencilMarks = []; // מערך דו-ממדי עם מערכי אפשרויות בכל תא
+  let selectedCell = null; // [row,col]
+  let history = [];
+  let redoStack = [];
+  let timerInterval = null;
+  let startTime = null;
 
-  function cloneBoard(board) {
-    return board.map(row => [...row]);
-  }
-
-  // פשוט פתרון ידני (לא אופטימלי) - לשימוש בלבד לצורך הדגמה
-  function solveBoard(board) {
-    const findEmpty = (board) => {
-      for(let r=0;r<9;r++) {
-        for(let c=0;c<9;c++) {
-          if(board[r][c] === 0) return [r,c];
-        }
-      }
-      return null;
-    };
-
-    const isValid = (board, row, col, num) => {
-      for(let i=0;i<9;i++) {
-        if(board[row][i] === num) return false;
-        if(board[i][col] === num) return false;
-      }
-      const startRow = Math.floor(row/3)*3;
-      const startCol = Math.floor(col/3)*3;
-      for(let r=0;r<3;r++) {
-        for(let c=0;c<3;c++) {
-          if(board[startRow+r][startCol+c] === num) return false;
-        }
-      }
-      return true;
-    };
-
-    const backtrack = () => {
-      const emptyPos = findEmpty(board);
-      if(!emptyPos) return true;
-      const [r,c] = emptyPos;
-      for(let num=1;num<=9;num++) {
-        if(isValid(board,r,c,num)){
-          board[r][c] = num;
-          if(backtrack()) return true;
-          board[r][c] = 0;
-        }
-      }
-      return false;
-    };
-
-    backtrack();
-  }
-
-  // מלא את הלוח בתאים וערכים
-  function drawBoard() {
-    boardElem.innerHTML = '';
-    for(let r=0; r<9; r++) {
+  // פונקציה ליצירת לוח HTML דינמי עם תאים
+  function createBoard() {
+    gameDiv.innerHTML = '';
+    const table = document.createElement('table');
+    table.setAttribute('aria-label', 'לוח סודוקו');
+    for(let r=0; r<SIZE; r++) {
       const tr = document.createElement('tr');
-      for(let c=0; c<9; c++) {
+      for(let c=0; c<SIZE; c++) {
         const td = document.createElement('td');
-        // גבולות בלוקים 3x3
-        if(c === 2 || c === 5) td.classList.add('block-border-right');
-        if(r === 2 || r === 5) td.classList.add('block-border-bottom');
+        td.dataset.row = r;
+        td.dataset.col = c;
 
-        if(currentBoard[r][c] !== 0) {
-          td.textContent = currentBoard[r][c];
-          td.classList.add('prefilled');
-          td.setAttribute('aria-label', `תא שכולל את המספר ${currentBoard[r][c]}`);
-        } else {
-          const input = document.createElement('input');
-          input.type = 'text';
-          input.maxLength = 1;
-          input.setAttribute('inputmode', 'numeric');
-          input.setAttribute('aria-label', `תא ריק בשורה ${r+1}, עמודה ${c+1}`);
-          input.addEventListener('input', e => {
-            let val = e.target.value;
-            // אפשר רק ספרה 1-9
-            if(!/^[1-9]$/.test(val)) {
-              e.target.value = '';
-              updateBoardValue(r, c, 0);
-              checkErrors();
-              return;
-            }
-            updateBoardValue(r, c, parseInt(val));
-            checkErrors();
-            checkCompletion();
-          });
-          td.appendChild(input);
-        }
+        // גבולות בלוקים עבים
+        if ((c+1) % BLOCK === 0 && c !== SIZE - 1) td.classList.add('block-right');
+        if ((r+1) % BLOCK === 0 && r !== SIZE - 1) td.classList.add('block-bottom');
+
+        // למנוע סימון טקסט
+        td.style.userSelect = "none";
+
+        // הוסף אלמנט pencil marks קטן בתוך התא
+        const pencilDiv = document.createElement('div');
+        pencilDiv.className = 'pencil-marks';
+        td.appendChild(pencilDiv);
+
+        // מאזין ללחיצה על תא
+        td.addEventListener('click', () => selectCell(r,c));
         tr.appendChild(td);
       }
-      boardElem.appendChild(tr);
+      table.appendChild(tr);
     }
+    gameDiv.appendChild(table);
   }
 
-  // עדכון ערך במערך הלוח
-  function updateBoardValue(row, col, val) {
-    currentBoard[row][col] = val;
+  // בחירת תא, סימון כבחור נוכחי
+  function selectCell(row,col) {
+    clearMessage();
+    if(selectedCell){
+      const [sr, sc] = selectedCell;
+      const prevCell = getCellElement(sr, sc);
+      prevCell.classList.remove('selected');
+    }
+    selectedCell = [row,col];
+    const cell = getCellElement(row,col);
+    cell.classList.add('selected');
   }
 
-  // בדיקה של שגיאות בלוח
-  function checkErrors() {
-    clearErrors();
-    let errors = false;
+  // מחזיר את תא ה-td לפי שורה ועמודה
+  function getCellElement(row,col){
+    return gameDiv.querySelector(`td[data-row="${row}"][data-col="${col}"]`);
+  }
 
-    // פונקציה לבדוק כפילויות בשורה, עמודה, בלוק
-    function hasDuplicates(arr) {
-      const seen = new Set();
-      for(const num of arr){
-        if(num === 0) continue;
-        if(seen.has(num)) return true;
-        seen.add(num);
-      }
-      return false;
-    }
-
-    // סמן שגיאות בתאים
-    for(let r=0; r<9; r++) {
-      for(let c=0; c<9; c++) {
-        const val = currentBoard[r][c];
-        if(val === 0) continue;
-
-        // שורה
-        let rowVals = currentBoard[r];
-        if(hasDuplicates(rowVals)) {
-          markErrorInRow(r, val);
-          errors = true;
-        }
-
-        // עמודה
-        let colVals = [];
-        for(let rr=0; rr<9; rr++) colVals.push(currentBoard[rr][c]);
-        if(hasDuplicates(colVals)) {
-          markErrorInCol(c, val);
-          errors = true;
-        }
-
-        // בלוק 3x3
-        const startRow = Math.floor(r/3)*3;
-        const startCol = Math.floor(c/3)*3;
-        let blockVals = [];
-        for(let rr=0; rr<3; rr++) {
-          for(let cc=0; cc<3; cc++) {
-            blockVals.push(currentBoard[startRow+rr][startCol+cc]);
+  // הצגת הלוח לפי המערכים board ו-pencilMarks
+  function renderBoard() {
+    for(let r=0; r<SIZE; r++){
+      for(let c=0; c<SIZE; c++){
+        const cell = getCellElement(r,c);
+        cell.textContent = '';
+        cell.classList.remove('preset', 'invalid');
+        // אם יש מספר בהתחלה - סימן כאילו preset ולא ניתן לשינוי
+        if(initialBoard[r][c] !== 0){
+          cell.textContent = initialBoard[r][c];
+          cell.classList.add('preset');
+        } else {
+          if(board[r][c] !== 0) {
+            cell.textContent = board[r][c];
           }
         }
-        if(hasDuplicates(blockVals)) {
-          markErrorInBlock(startRow, startCol, val);
-          errors = true;
-        }
-      }
-    }
-    return errors;
-  }
-
-  // ניקוי שגיאות
-  function clearErrors() {
-    boardElem.querySelectorAll('td.error').forEach(td => td.classList.remove('error'));
-  }
-
-  // סימון שגיאה בשורה
-  function markErrorInRow(row, val) {
-    for(let c=0;c<9;c++) {
-      if(currentBoard[row][c] === val) {
-        markCellError(row, c);
-      }
-    }
-  }
-  // סימון שגיאה בעמודה
-  function markErrorInCol(col, val) {
-    for(let r=0;r<9;r++) {
-      if(currentBoard[r][col] === val) {
-        markCellError(r, col);
-      }
-    }
-  }
-  // סימון שגיאה בבלוק
-  function markErrorInBlock(startRow, startCol, val) {
-    for(let r=0;r<3;r++) {
-      for(let c=0;c<3;c++) {
-        if(currentBoard[startRow+r][startCol+c] === val) {
-          markCellError(startRow+r, startCol+c);
+        // הצגת סימוני עיפרון
+        const pencilDiv = cell.querySelector('.pencil-marks');
+        pencilDiv.innerHTML = '';
+        if(pencilMarks[r][c].size > 0 && board[r][c] === 0) {
+          for(let n=1; n<=9; n++){
+            const span = document.createElement('span');
+            if(pencilMarks[r][c].has(n)) {
+              span.textContent = n;
+            } else {
+              span.textContent = '';
+            }
+            pencilDiv.appendChild(span);
+          }
         }
       }
     }
   }
-  // סימון תא שגוי
-  function markCellError(row, col) {
-    const rowEl = boardElem.children[row];
-    if(!rowEl) return;
-    const cell = rowEl.children[col];
-    if(cell) cell.classList.add('error');
-  }
 
-  // בדיקה אם המשחק הושלם נכון
-  function checkCompletion() {
-    if(checkErrors()) {
-      message.textContent = '';
-      return false;
+  // בדיקה אם הכנסת מספר חוקית (שורה, עמודה ובלוק)
+  function isValidMove(row, col, num, currentBoard = board) {
+    if(num < 1 || num > 9) return false;
+
+    // שורה
+    for(let c=0; c<SIZE; c++){
+      if(c !== col && currentBoard[row][c] === num) return false;
     }
-    for(let r=0;r<9;r++){
-      for(let c=0;c<9;c++){
-        if(currentBoard[r][c] === 0) {
-          message.textContent = '';
-          return false;
-        }
+    // עמודה
+    for(let r=0; r<SIZE; r++){
+      if(r !== row && currentBoard[r][col] === num) return false;
+    }
+    // בלוק 3x3
+    const br = Math.floor(row / BLOCK)*BLOCK;
+    const bc = Math.floor(col / BLOCK)*BLOCK;
+    for(let rr=br; rr<br+BLOCK; rr++){
+      for(let cc=bc; cc<bc+BLOCK; cc++){
+        if((rr !== row || cc !== col) && currentBoard[rr][cc] === num) return false;
       }
     }
-    message.textContent = "כל הכבוד! השלמת את הסודוקו 🎉";
-    stopTimer();
     return true;
   }
 
-  // טיימר
-  function startTimer() {
-    if(timerRunning) return;
-    timerRunning = true;
-    timerToggle.setAttribute('aria-pressed', 'true');
-    timerToggle.textContent = 'כבה טיימר';
-    timer = setInterval(() => {
-      timerSeconds++;
-      const mins = Math.floor(timerSeconds / 60).toString().padStart(2,'0');
-      const secs = (timerSeconds % 60).toString().padStart(2,'0');
-      timerDisplay.textContent = `${mins}:${secs}`;
-    }, 1000);
-  }
-  function stopTimer() {
-    timerRunning = false;
-    timerToggle.setAttribute('aria-pressed', 'false');
-    timerToggle.textContent = 'הפעל טיימר';
-    clearInterval(timer);
-    timer = null;
-  }
-  function resetTimer() {
-    stopTimer();
-    timerSeconds = 0;
-    timerDisplay.textContent = '00:00';
+  // בדיקת אם הלוח מלא ותקין (האם המשחק הושלם)
+  function isBoardComplete() {
+    for(let r=0; r<SIZE; r++){
+      for(let c=0; c<SIZE; c++){
+        if(board[r][c] === 0 || !isValidMove(r,c,board[r][c])) return false;
+      }
+    }
+    return true;
   }
 
-  // יצירת משחק חדש לפי רמת קושי
-  function newGame() {
-    resetTimer();
-    message.textContent = '';
-    let board;
-    switch(difficultySelect.value) {
+  // הכנסת מספר לתא נבחר
+  function inputNumber(num, pencil=false) {
+    if(!selectedCell){
+      showMessage('בחר תא לפני הכנסת מספר');
+      return;
+    }
+    const [r,c] = selectedCell;
+    if(initialBoard[r][c] !== 0){
+      showMessage('לא ניתן לשנות את המספר הראשוני');
+      return;
+    }
+    if(pencil){
+      // עדכון סימוני עיפרון - הוספה או הסרה
+      if(pencilMarks[r][c].has(num)){
+        pencilMarks[r][c].delete(num);
+      } else {
+        pencilMarks[r][c].add(num);
+      }
+      saveHistory();
+      renderBoard();
+      return;
+    }
+    // הכנסת מספר רגילה
+    if(num === 0) {
+      // מחיקת מספר
+      board[r][c] = 0;
+      pencilMarks[r][c].clear();
+      saveHistory();
+      renderBoard();
+      return;
+    }
+    if(!isValidMove(r,c,num)){

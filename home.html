@@ -241,7 +241,7 @@
       </a>
 
       <!-- Sudoku Card -->
-      <a class="card" href="https://nine.websudoku.com/?level=1" role="link" aria-label="פתח משחק הסודוקו">
+      <a class="card" href="sudoku.html" role="link" aria-label="פתח משחק הסודוקו">
         <div class="thumb" aria-hidden="true">
           <!-- sudoku SVG (custom icon) -->
           <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" fill="none" stroke="white" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
@@ -277,105 +277,4 @@
     document.getElementById('year').textContent = new Date().getFullYear();
 
     // Particle effect (simple) - toggleable
-    const canvas = document.getElementById('particle-canvas');
-    const ctx = canvas.getContext && canvas.getContext('2d');
-    let particles = [];
-    let running = false;
-    let rafId = null;
-
-    function resizeCanvas(){
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
-    }
-
-    function makeParticle(x,y){
-      return {
-        x, y,
-        vx: (Math.random()-0.5)*1.2,
-        vy: (Math.random()-1.5)*1.2,
-        life: 60 + Math.random()*40,
-        r: 2 + Math.random()*3,
-        hue: 200 + Math.random()*60
-      }
-    }
-
-    function spawnBurst(){
-      const w = canvas.width, h = canvas.height;
-      for(let i=0;i<18;i++){
-        particles.push(makeParticle( Math.random()*w, Math.random()*h ));
-      }
-    }
-
-    function loopParticles(){
-      if(!running) return;
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      for(let i=particles.length-1;i>=0;i--){
-        const p = particles[i];
-        p.life--;
-        p.x += p.vx; p.y += p.vy;
-        p.vy += 0.02;
-        const alpha = Math.max(0, p.life/100);
-        ctx.beginPath();
-        ctx.fillStyle = 'hsla('+ (p.hue) +',80%,'+ (50 - (p.r*3)) +'%, '+ alpha +')';
-        ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-        ctx.fill();
-        if(p.life <= 0 || p.y > canvas.height + 20){ particles.splice(i,1); }
-      }
-      // natural spawn
-      if(Math.random() < 0.03) spawnBurst();
-      rafId = requestAnimationFrame(loopParticles);
-    }
-
-    // toggle handler
-    const toggleBtn = document.getElementById('particlesToggle');
-    toggleBtn.addEventListener('click', () => {
-      running = !running;
-      if(running){
-        canvas.style.display = 'block';
-        resizeCanvas();
-        particles = [];
-        spawnBurst();
-        loopParticles();
-        toggleBtn.textContent = 'כבה אפקטים';
-      } else {
-        cancelAnimationFrame(rafId);
-        canvas.style.display = 'none';
-        particles = [];
-        toggleBtn.textContent = 'הפעל אפקטים';
-      }
-    });
-
-    // handle resize
-    window.addEventListener('resize', () => {
-      if(running) resizeCanvas();
-    });
-
-    // small UX: pressing Enter on card follows link
-    document.querySelectorAll('.card').forEach(card => {
-      card.addEventListener('keydown', (e) => {
-        if(e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          card.click();
-        }
-      });
-      // make cards focusable for keyboard
-      card.setAttribute('tabindex','0');
-    });
-
-    // download current index HTML content (simple helper)
-    function downloadIndex(){
-      const html = document.documentElement.outerHTML;
-      const blob = new Blob([html], {type: 'text/html;charset=utf-8'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'index.html';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    }
-    window.downloadIndex = downloadIndex;
-
-    // small accessibility: prefer-reduced-motion
-    if(window.matchMedia('(pref
+    const canvas = document.getElementBy

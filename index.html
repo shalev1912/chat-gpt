@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+  <meta charset="UTF-8" />
+  <title>משחק קליקים</title>
+  <style>
+    body { font-family: Arial, sans-serif; direction: rtl; text-align: center; padding: 20px; }
+    h1 { margin-bottom: 20px; }
+    #score { font-size: 48px; margin: 20px 0; }
+    button { font-size: 24px; padding: 15px 30px; cursor: pointer; border-radius: 8px; }
+    a { display: block; margin-top: 30px; color: #007bff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    /* אזור למודעה */
+    #ad-container { margin-top: 40px; }
+  </style>
+</head>
+<body>
+  <h1>משחק קליקים</h1>
+  <div>ניקוד: <span id="score">0</span></div>
+  <button id="click-btn">לחץ כאן!</button>
+
+  <a href="index.html">← חזרה לקטלוג</a>
+
+  <div id="ad-container">
+    <!-- כאן להוסיף פרסומת Google AdSense -->
+    <!-- דוגמה: -->
+    <!--
+    <ins class="adsbygoogle"
+         style="display:block; text-align:center;"
+         data-ad-layout="in-article"
+         data-ad-format="fluid"
+         data-ad-client="ca-pub-XXXXXXXXXXXX"
+         data-ad-slot="YYYYYYYYYY"></ins>
+    <script>
+         (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+    -->
+  </div>
+
+  <script>
+    let score = 0;
+    const scoreEl = document.getElementById('score');
+    const clickBtn = document.getElementById('click-btn');
+
+    clickBtn.addEventListener('click', () => {
+      score++;
+      scoreEl.textContent = score;
+    });
+  </script>
+</body>
+</html>

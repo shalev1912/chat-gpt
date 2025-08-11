@@ -2,7 +2,7 @@
 <html lang="he">
 <head>
   <meta charset="UTF-8" />
-  <title>משחק קליקים</title>
+  <title>משחק EXP</title>
   <link href="https://fonts.googleapis.com/css2?family=Assistant&family=Rubik&display=swap" rel="stylesheet" />
   <style>
     body {
@@ -17,7 +17,6 @@
       min-height: 100vh;
       justify-content: center;
       user-select: none;
-      position: relative; /* בשביל האלמנט של הפידבק */
       overflow: hidden;
     }
 
@@ -36,21 +35,10 @@
       color: white;
       cursor: pointer;
       transition: background 0.3s ease;
-      position: relative;
-      overflow: hidden;
-      user-select: none;
     }
 
     #click-btn:hover {
       background: linear-gradient(90deg, #182848, #4b6cb7);
-    }
-
-    #score {
-      margin-top: 25px;
-      font-size: 2rem;
-      font-weight: 700;
-      text-shadow: 1px 1px 4px rgba(0,0,0,0.5);
-      min-height: 50px;
     }
 
     .home-btn {
@@ -65,7 +53,6 @@
       font-weight: 600;
       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       transition: background 0.3s ease, color 0.3s ease;
-      user-select: none;
       z-index: 100;
     }
 
@@ -74,19 +61,37 @@
       color: white;
     }
 
-    /* תמונת החיה */
-    #animal-img {
-      margin-top: 30px;
-      width: 200px;
-      height: 200px;
-      object-fit: contain;
-      border-radius: 15px;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-      user-select: none;
-      transition: transform 0.3s ease;
+    #score {
+      margin-top: 25px;
+      font-size: 1.5rem;
+      font-weight: 700;
+      text-shadow: 1px 1px 4px rgba(0,0,0,0.5);
     }
 
-    /* פידבק גדול במרכז המסך */
+    #dollars {
+      margin-top: 5px;
+      font-size: 1.3rem;
+    }
+
+    /* פס EXP */
+    #exp-container {
+      margin-top: 20px;
+      width: 300px;
+      height: 30px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+
+    #exp-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #ffdd57, #ffaa00);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    /* פידבק */
     #big-feedback {
       position: fixed;
       top: 50%;
@@ -98,24 +103,24 @@
       text-shadow: 0 0 15px #ffdd57, 0 0 30px #ffaa00;
       opacity: 0;
       pointer-events: none;
-      user-select: none;
       transition: opacity 0.5s ease, transform 0.5s ease;
       z-index: 200;
     }
   </style>
 </head>
 <body>
-  <a href="home.html" class="home-btn">← חזור למסך הבית</a>
-  <h1>משחק קליקים</h1>
-  <button id="click-btn">
-    לחץ כאן!
-  </button>
-  <div id="score">נקודות: 0</div>
+  <a href="https://shalev1912.github.io/chat-gpt/home.html" class="home-btn">← חזור למסך הבית</a>
+  <h1>משחק ה־EXP</h1>
 
-  <!-- תמונת החיה -->
-  <img id="animal-img" src="https://i.imgur.com/8Km9tLL.png" alt="חיה" />
+  <button id="click-btn">לחץ כאן!</button>
 
-  <!-- פידבק גדול -->
+  <div id="score">EXP: 0 / 100</div>
+  <div id="dollars">דולרים: 0</div>
+
+  <div id="exp-container">
+    <div id="exp-bar"></div>
+  </div>
+
   <div id="big-feedback"></div>
 
   <audio id="click-sound" src="https://freesound.org/data/previews/256/256113_3263906-lq.mp3" preload="auto"></audio>
@@ -123,49 +128,43 @@
   <script>
     const btn = document.getElementById('click-btn');
     const scoreDisplay = document.getElementById('score');
-    const animalImg = document.getElementById('animal-img');
+    const dollarsDisplay = document.getElementById('dollars');
+    const expBar = document.getElementById('exp-bar');
     const bigFeedback = document.getElementById('big-feedback');
     const clickSound = document.getElementById('click-sound');
 
-    const animals = [
-      "https://i.imgur.com/2XfR7EZ.png",  // חתול
-      "https://i.imgur.com/8yvKX2x.png",  // כלב
-      "https://i.imgur.com/Fa1nOSr.png",  // ציפור
-      "https://i.imgur.com/7MrdcRU.png",  // ארנב
-      "https://i.imgur.com/0G0bYkZ.png"   // דוב
-    ];
+    let exp = parseInt(localStorage.getItem('exp')) || 0;
+    let dollars = parseInt(localStorage.getItem('dollars')) || 0;
 
-    let score = parseInt(localStorage.getItem('clickerScore')) || 0;
-    scoreDisplay.textContent = `נקודות: ${score}`;
-    updateAnimalImage(score);
+    updateDisplay();
 
     btn.addEventListener('click', () => {
-      const pointsGained = Math.floor(Math.random() * 10) + 1;
-      score += pointsGained;
-      scoreDisplay.textContent = `נקודות: ${score}`;
-      localStorage.setItem('clickerScore', score);
-
-      updateAnimalImage(score);
-      showBigFeedback(`+${pointsGained}`);
+      const gained = Math.floor(Math.random() * 10) + 1; // 1-10 EXP
+      exp += gained;
+      if (exp >= 100) {
+        const extra = exp - 100;
+        dollars++;
+        exp = extra; // מה שנשאר עובר לסיבוב הבא
+        localStorage.setItem('dollars', dollars);
+        showBigFeedback("+$1 💰");
+      } else {
+        showBigFeedback(`+${gained} EXP`);
+      }
+      localStorage.setItem('exp', exp);
+      updateDisplay();
       playClickSound();
-
-      animalImg.style.transform = 'scale(1.1)';
-      setTimeout(() => {
-        animalImg.style.transform = 'scale(1)';
-      }, 150);
     });
 
-    function updateAnimalImage(score) {
-      const numAnimals = animals.length;
-      const index = Math.floor(score / 50) % numAnimals;
-      animalImg.src = animals[index];
+    function updateDisplay() {
+      scoreDisplay.textContent = `EXP: ${exp} / 100`;
+      dollarsDisplay.textContent = `דולרים: ${dollars}`;
+      expBar.style.width = `${(exp / 100) * 100}%`;
     }
 
     function showBigFeedback(text) {
       bigFeedback.textContent = text;
       bigFeedback.style.opacity = '1';
       bigFeedback.style.transform = 'translate(-50%, -50%) scale(1.2)';
-
       setTimeout(() => {
         bigFeedback.style.opacity = '0';
         bigFeedback.style.transform = 'translate(-50%, -50%) scale(1)';

@@ -2,28 +2,28 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>סודוקו מתקדם</title>
+<title>סודוקו עתידני</title>
 <style>
 body {
-  font-family: Arial, sans-serif;
-  background: #222;
-  color: white;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: radial-gradient(circle at center, #0f2027, #203a43, #2c5364);
+  color: #fff;
   margin: 0;
   padding: 0;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  min-height: 100vh;
 }
 .container {
-  max-width: 800px;
+  max-width: 900px;
+  margin: auto;
   padding: 20px;
 }
 h1, h2 {
   text-align: center;
+  text-shadow: 0 0 8px #0ff;
 }
 .hidden { display: none; }
 button {
-  background: #4CAF50;
+  background: linear-gradient(90deg, #00c6ff, #0072ff);
   border: none;
   padding: 10px 20px;
   margin: 5px;
@@ -31,8 +31,13 @@ button {
   font-size: 16px;
   cursor: pointer;
   border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
+  transition: 0.2s;
 }
-button:hover { background: #45a049; }
+button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.9);
+}
 select {
   padding: 5px;
   font-size: 16px;
@@ -40,36 +45,48 @@ select {
 }
 .board {
   display: grid;
-  grid-template-columns: repeat(9, 40px);
-  grid-template-rows: repeat(9, 40px);
+  grid-template-columns: repeat(9, 45px);
+  grid-template-rows: repeat(9, 45px);
   gap: 2px;
   margin: 20px auto;
+  border: 3px solid #0ff;
+  box-shadow: 0 0 20px #0ff;
 }
 .cell {
-  background: white;
+  background: rgba(255,255,255,0.9);
   color: black;
   text-align: center;
   font-size: 18px;
   border: 1px solid #999;
+  outline: none;
 }
 .cell[readonly] {
-  background: #eee;
+  background: rgba(200,200,200,0.8);
+  font-weight: bold;
 }
 .error {
-  background: #ffcccc !important;
+  background: #ff9999 !important;
 }
 .stats {
   display: flex;
   justify-content: space-between;
   margin: 10px 0;
+  font-size: 18px;
+}
+.home-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
 }
 </style>
 </head>
 <body>
 <div class="container">
+  
   <!-- מסך הבית -->
   <div id="home-screen">
-    <h1>ברוכים הבאים לסודוקו</h1>
+    <h1>ברוכים הבאים לסודוקו עתידני</h1>
     <label for="difficulty">בחר רמת קושי:</label>
     <select id="difficulty">
       <option value="easy">קל</option>
@@ -90,7 +107,10 @@ select {
     <div style="text-align:center;">
       <button id="check-btn">בדוק</button>
       <button id="hint-btn">רמז</button>
-      <button id="home-btn">חזור למסך הבית</button>
+    </div>
+    <div class="home-buttons">
+      <button id="back-home-btn">🏠 חזור למסך הבית</button>
+      <button id="external-home-btn">🌐 חזור לאתר</button>
     </div>
   </div>
 </div>
@@ -101,7 +121,12 @@ let solution = [];
 let currentDifficulty = 'easy';
 
 document.getElementById('start-btn').addEventListener('click', startGame);
-document.getElementById('home-btn').addEventListener('click', () => {
+document.getElementById('back-home-btn').addEventListener('click', () => {
+  clearInterval(timerInterval);
+  document.getElementById('game-screen').classList.add('hidden');
+  document.getElementById('home-screen').classList.remove('hidden');
+});
+document.getElementById('external-home-btn').addEventListener('click', () => {
   window.location.href = "https://shalev1912.github.io/chat-gpt/home.html";
 });
 document.getElementById('check-btn').addEventListener('click', checkBoard);
@@ -186,6 +211,7 @@ function checkBoard() {
     alert('כל הכבוד! פתרת את הסודוקו!');
     score += 100;
     updateStats();
+    clearInterval(timerInterval);
   }
 }
 
@@ -201,7 +227,7 @@ function giveHint() {
   }
 }
 
-// פתרון סודוקו (Backtracking)
+// פתרון סודוקו
 function solveSudoku(board) {
   const findEmpty = () => {
     for (let i = 0; i < 81; i++) if (board[i] === '.') return i;

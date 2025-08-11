@@ -309,4 +309,93 @@ function buyItem(id){
   }
   state.dollars -= it.cost;
   state.items[it.id] = (state.items[it.id] || 0) + 1;
-  flashMessage(`נכון
+  flashMessage(`נכון קנית ${it.name}`);
+  updateUI();
+}
+function upgradeCostForNext(){
+  return UPGRADE_BASE_COST * Math.pow(UPGRADE_COST_MULT, state.upgradeLevel);
+}
+buyUpgradeBtn.addEventListener('click', () => {
+  const cost = Math.floor(upgradeCostForNext());
+  if(state.dollars < cost){
+    flashMessage('אין מספיק דולרים לשדרוג');
+    return;
+  }
+  state.dollars -= cost;
+  state.upgradeLevel++;
+  state.clickValue = 1 + state.upgradeLevel;
+  flashMessage(`שידרגת לחיצה ל Lv.${state.upgradeLevel}`);
+  updateUI();
+});
+
+/* ====== לחיצה ====== */
+clickBtn.addEventListener('click', () => {
+  state.exp += state.clickValue;
+  collectDollars();
+  updateUI();
+});
+
+/* ====== הכנסה אוטומטית כל שנייה ====== */
+setInterval(() => {
+  const pps = computePps();
+  if(pps > 0){
+    state.exp += pps;
+    collectDollars();
+    updateUI();
+  }
+}, 1000);
+
+/* ====== המרת EXP לדולרים ====== */
+function collectDollars(){
+  while(state.exp >= 100){
+    state.exp -= 100;
+    state.dollars++;
+  }
+}
+
+/* ====== הודעות זמניות ====== */
+function flashMessage(msg){
+  // לפשט - משתמש בה alert בינתיים
+  // אפשר לשפר ל-toast ועוד
+  alert(msg);
+}
+
+/* ====== איפוס ====== */
+resetBtn.addEventListener('click', () => {
+  if(confirm('אתה בטוח שברצונך לאפס את המשחק?')){
+    state = {
+      exp: 0,
+      dollars: 0,
+      clickValue: 1,
+      items: {},
+      upgradeLevel: 0
+    };
+    updateUI();
+  }
+});
+
+/* ====== התנהגות החנות ====== */
+
+// שדרוג ההתנהגות: כפתור החנות עובד כ-toggle
+shopBtn.addEventListener('click', () => {
+  const isHidden = shopModal.classList.contains('hidden');
+  if(isHidden){
+    renderShopGrid();
+    shopModal.classList.remove('hidden');
+    shopModal.setAttribute('aria-hidden','false');
+  } else {
+    shopModal.classList.add('hidden');
+    shopModal.setAttribute('aria-hidden','true');
+  }
+});
+closeShopBtn.addEventListener('click', () => {
+  shopModal.classList.add('hidden');
+  shopModal.setAttribute('aria-hidden','true');
+});
+
+/* ====== התחלת UI ====== */
+updateUI();
+
+</script>
+</body>
+</html>

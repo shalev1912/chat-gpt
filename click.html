@@ -1,181 +1,493 @@
 <!DOCTYPE html>
-<html lang="he">
+<html lang="he" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <title>משחק EXP</title>
-  <link href="https://fonts.googleapis.com/css2?family=Assistant&family=Rubik&display=swap" rel="stylesheet" />
-  <style>
-    body {
-      font-family: 'Rubik', 'Assistant', Arial, sans-serif;
-      direction: rtl;
-      margin: 20px;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-      justify-content: center;
-      user-select: none;
-      overflow: hidden;
-    }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>לחץ וצבור — EXP & חנות</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg1:#0f1724; --accent:#7CFFEA; --accent2:#6A6CFF; --glass: rgba(255,255,255,0.04);
+    --neon: rgba(124,255,234,0.12);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100vh; font-family: 'Rubik', system-ui, -apple-system, Roboto, "Helvetica Neue", Arial;
+    background: radial-gradient(1200px 600px at 10% 10%, #071019 0%, #081227 20%, #071330 60%, #04060b 100%);
+    color:#E6F3F1; display:flex; align-items:center; justify-content:center; padding:28px;
+  }
 
-    h1 {
-      margin-bottom: 20px;
-      text-shadow: 1px 1px 5px rgba(0,0,0,0.4);
-    }
+  .app {
+    width:100%; max-width:980px; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:16px; padding:22px; box-shadow: 0 10px 40px rgba(2,8,23,0.7);
+    border: 1px solid rgba(124,255,234,0.06); position:relative; overflow:hidden;
+  }
 
-    #click-btn {
-      padding: 15px 30px;
-      font-size: 1.3rem;
-      border: none;
-      border-radius: 30px;
-      background: linear-gradient(90deg, #4b6cb7, #182848);
-      box-shadow: 0 6px 25px rgba(24, 40, 72, 0.8);
-      color: white;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
+  header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+  .brand { display:flex; gap:12px; align-items:center; }
+  .logo { width:56px; height:56px; border-radius:12px; background:linear-gradient(135deg,var(--accent),var(--accent2)); display:flex; align-items:center; justify-content:center; color:#021; font-weight:800; box-shadow: 0 6px 20px rgba(106,108,255,0.14); }
+  h1{font-size:20px;margin:0}
+  p.lead{ margin:0;color:rgba(230,243,241,0.85); font-size:13px }
 
-    #click-btn:hover {
-      background: linear-gradient(90deg, #182848, #4b6cb7);
-    }
+  .controls { display:flex; gap:10px; align-items:center; }
+  .btn {
+    background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+    color:var(--accent); border:1px solid rgba(124,255,234,0.08); padding:8px 12px; border-radius:10px; cursor:pointer;
+    font-weight:600;
+  }
+  .btn.primary{
+    background: linear-gradient(90deg,var(--accent),var(--accent2));
+    color:#021; border: none; box-shadow: 0 10px 30px rgba(106,108,255,0.12);
+  }
+  .btn:disabled{ opacity:0.45; cursor:not-allowed; }
 
-    .home-btn {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      background: white;
-      color: #182848;
-      padding: 8px 14px;
-      border-radius: 20px;
-      text-decoration: none;
-      font-weight: 600;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      transition: background 0.3s ease, color 0.3s ease;
-      z-index: 100;
-    }
+  main { display:flex; gap:20px; align-items:flex-start; }
+  .left { flex:1; display:flex; flex-direction:column; align-items:center; gap:12px; }
+  .right { width:360px; background:rgba(255,255,255,0.02); border-radius:12px; padding:14px; }
 
-    .home-btn:hover {
-      background: #4b6cb7;
-      color: white;
-    }
+  #click-btn{
+    font-size:20px; padding:24px 40px; border-radius:14px; cursor:pointer; border:none;
+    background: linear-gradient(90deg,var(--accent2),var(--accent));
+    color:#021; font-weight:800; box-shadow: 0 12px 40px rgba(106,108,255,0.14);
+  }
 
-    #score {
-      margin-top: 25px;
-      font-size: 1.5rem;
-      font-weight: 700;
-      text-shadow: 1px 1px 4px rgba(0,0,0,0.5);
-    }
+  .stat{ background:var(--glass); padding:10px 14px; border-radius:10px; width:100%; display:flex; justify-content:space-between; align-items:center; border:1px solid rgba(255,255,255,0.02); }
+  .stat small{ color:rgba(230,243,241,0.7) }
 
-    #dollars {
-      margin-top: 5px;
-      font-size: 1.3rem;
-    }
+  /* EXP bar */
+  .exp-wrap{ width:100%; margin-top:6px; }
+  .exp-bg{ height:18px; background:rgba(255,255,255,0.03); border-radius:12px; overflow:hidden; border:1px solid rgba(124,255,234,0.04) }
+  .exp-bar{ height:100%; width:0%; background: linear-gradient(90deg,#ffdd57,#ffaa00); transition: width 0.25s ease; box-shadow: inset 0 -6px 18px rgba(0,0,0,0.2); }
 
-    /* פס EXP */
-    #exp-container {
-      margin-top: 20px;
-      width: 300px;
-      height: 30px;
-      background: rgba(255,255,255,0.2);
-      border-radius: 15px;
-      overflow: hidden;
-      box-shadow: 0 0 10px rgba(0,0,0,0.3);
-    }
+  .currency{ display:flex; gap:10px; margin-top:8px; align-items:center; }
+  .coin{ background:linear-gradient(90deg,#ffd166,#ffb347); color:#111; padding:6px 10px; border-radius:8px; font-weight:700; box-shadow:0 6px 18px rgba(255,177,71,0.12) }
 
-    #exp-bar {
-      height: 100%;
-      background: linear-gradient(90deg, #ffdd57, #ffaa00);
-      width: 0%;
-      transition: width 0.3s ease;
-    }
+  /* shop modal */
+  .modal-backdrop { position:fixed; inset:0; background:rgba(2,6,23,0.7); display:flex; align-items:center; justify-content:center; z-index:60; }
+  .modal { width:92%; max-width:760px; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:14px; padding:18px; border:1px solid rgba(124,255,234,0.06); box-shadow:0 30px 80px rgba(2,8,23,0.7); }
+  .modal h3{ margin:0 0 8px 0; font-size:18px }
+  .shop-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:12px }
+  .shop-item{ background:rgba(255,255,255,0.02); padding:12px; border-radius:10px; display:flex; flex-direction:column; gap:8px; border:1px solid rgba(255,255,255,0.02) }
+  .shop-item h4{ margin:0; font-size:16px }
+  .shop-item small{ color:rgba(230,243,241,0.7) }
+  .shop-item .buy-row{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:6px }
+  .shop-item .count{ font-weight:700; color:var(--accent) }
 
-    /* פידבק */
-    #big-feedback {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%) scale(1);
-      font-size: 5rem;
-      font-weight: 900;
-      color: #ffdd57;
-      text-shadow: 0 0 15px #ffdd57, 0 0 30px #ffaa00;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.5s ease, transform 0.5s ease;
-      z-index: 200;
-    }
-  </style>
+  /* small helper */
+  .muted{ color:rgba(230,243,241,0.65); font-size:13px }
+  footer{ margin-top:14px; text-align:center; color:rgba(230,243,241,0.5); font-size:13px }
+
+  /* particles canvas */
+  #particle-canvas{ position:absolute; inset:0; pointer-events:none; z-index:30 }
+
+  @media (max-width:860px){
+    main{ flex-direction:column; align-items:stretch }
+    .right{ width:100% }
+    .shop-grid{ grid-template-columns: 1fr }
+  }
+</style>
 </head>
 <body>
-  <a href="https://shalev1912.github.io/chat-gpt/home.html" class="home-btn">← חזור למסך הבית</a>
-  <h1>משחק ה־EXP</h1>
+  <div class="app" role="application" aria-label="משחק EXP עם חנות">
+    <canvas id="particle-canvas"></canvas>
 
-  <button id="click-btn">לחץ כאן!</button>
+    <header>
+      <div class="brand">
+        <div class="logo">EXP</div>
+        <div>
+          <h1>לחץ וצבור - חנות אוטומטית</h1>
+          <p class="lead">צבור EXP, קנה חנויות שייצרו EXP לכל שנייה ושדרג את הלחיצה</p>
+        </div>
+      </div>
 
-  <div id="score">EXP: 0 / 100</div>
-  <div id="dollars">דולרים: 0</div>
+      <div class="controls" aria-hidden="false">
+        <button id="shop-btn" class="btn">🛒 חנות</button>
+        <button id="reset-btn" class="btn">♻ איפוס</button>
+        <a class="btn" href="https://shalev1912.github.io/chat-gpt/home.html" target="_blank" rel="noopener">🏠 חזרה לאתר</a>
+      </div>
+    </header>
 
-  <div id="exp-container">
-    <div id="exp-bar"></div>
+    <main>
+      <section class="left">
+        <div class="stat" style="max-width:520px">
+          <div>
+            <div style="font-size:13px; color:rgba(230,243,241,0.8)">נקודות EXP</div>
+            <div style="font-weight:800; font-size:20px" id="exp-display">0</div>
+            <div class="exp-wrap">
+              <div class="exp-bg" aria-hidden="true">
+                <div id="exp-bar" class="exp-bar"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-top:6px">
+                <small class="muted">EXP עד דולר הבא</small>
+                <small id="to-next" class="muted">100</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button id="click-btn" aria-label="לחץ לקבלת EXP">לחץ לקבלת EXP</button>
+
+        <div style="display:flex; gap:10px; margin-top:10px; width:100%; justify-content:center; align-items:center;">
+          <div class="coin">דולרים: <span id="dollars">0</span></div>
+          <div class="coin">EXP/לחיצה: <span id="click-value">1</span></div>
+          <div class="coin">EXP/שניה: <span id="pps">0</span></div>
+        </div>
+      </section>
+
+      <aside class="right">
+        <div style="display:flex;flex-direction:column; gap:8px;">
+          <div class="stat"><small>שדרוג לחיצה</small><div style="display:flex;gap:8px;align-items:center">
+            <div style="font-weight:800" id="upgrade-level">Lv.0</div>
+            <div class="muted" style="font-size:13px" id="upgrade-desc">+1 EXP ללחיצה</div>
+          </div></div>
+
+          <div style="display:flex; gap:8px; align-items:center;">
+            <button id="buy-upgrade" class="btn primary">קנה שדרוג</button>
+            <div class="muted">מחיר: <span id="upgrade-cost">10</span> דולרים</div>
+          </div>
+
+          <div style="height:1px;background:rgba(255,255,255,0.03);margin:8px 0;border-radius:2px"></div>
+
+          <div class="muted">טיפים: קנה פריטים שמייצרים EXP אוטומטית. שדרג לחיצה להגדלת הכנסה מפעילה.</div>
+        </div>
+      </aside>
+    </main>
+
+    <footer>הכל נשמר אוטומטית במכשירך (localStorage). פנה אלי אם תרצה חנות מתקדמת יותר או חיבור לשרת.</footer>
   </div>
 
-  <div id="big-feedback"></div>
+  <!-- Modal shop (initially hidden) -->
+  <div id="shop-modal" class="modal-backdrop hidden" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal" role="document">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <h3>🏬 החנות</h3>
+        <div>
+          <button id="close-shop" class="btn">✖ סגור</button>
+        </div>
+      </div>
 
-  <audio id="click-sound" src="https://freesound.org/data/previews/256/256113_3263906-lq.mp3" preload="auto"></audio>
+      <div style="margin-top:8px; color:rgba(230,243,241,0.8)">קנה חנויות או שדרוגים פסיביים — כל פריט מייצר EXP לשנייה (או שדרג את הלחיצה).</div>
 
-  <script>
-    const btn = document.getElementById('click-btn');
-    const scoreDisplay = document.getElementById('score');
-    const dollarsDisplay = document.getElementById('dollars');
-    const expBar = document.getElementById('exp-bar');
-    const bigFeedback = document.getElementById('big-feedback');
-    const clickSound = document.getElementById('click-sound');
+      <div class="shop-grid" id="shop-grid">
+        <!-- פריטים ייצרנו דינמית -->
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:12px">
+        <button id="buy-selected" class="btn primary">קנה</button>
+      </div>
+    </div>
+  </div>
 
-    let exp = parseInt(localStorage.getItem('exp')) || 0;
-    let dollars = parseInt(localStorage.getItem('dollars')) || 0;
+<script>
+/* ====== נתוני חנות ומצב ====== */
+const SHOP_ITEMS = [
+  { id:'kiosk', name:'קיוסק', desc:'ייצור קטן', cost:5, pps:1 },
+  { id:'stall', name:'עגלת רחוב', desc:'יומן יותר', cost:25, pps:5 },
+  { id:'shop', name:'חנות', desc:'ייצור קבוע', cost:120, pps:15 },
+  { id:'factory', name:'מפעל', desc:'ייצור תעשייתי', cost:700, pps:100 },
+];
 
-    updateDisplay();
+const UPGRADE_BASE_COST = 10;
+const UPGRADE_COST_MULT = 1.9; // סקלינג למחיר שדרוגים
 
-    btn.addEventListener('click', () => {
-      const gained = Math.floor(Math.random() * 10) + 1; // 1-10 EXP
-      exp += gained;
-      if (exp >= 100) {
-        const extra = exp - 100;
-        dollars++;
-        exp = extra; // מה שנשאר עובר לסיבוב הבא
-        localStorage.setItem('dollars', dollars);
-        showBigFeedback("+$1 💰");
-      } else {
-        showBigFeedback(`+${gained} EXP`);
-      }
-      localStorage.setItem('exp', exp);
-      updateDisplay();
-      playClickSound();
+let state = {
+  exp: 0,
+  dollars: 0,
+  clickValue: 1,
+  items: {},    // id -> count
+  upgradeLevel: 0
+};
+
+/* ====== שמירה וטענת מצב ====== */
+function saveState(){
+  localStorage.setItem('expGameState', JSON.stringify(state));
+}
+function loadState(){
+  const raw = localStorage.getItem('expGameState');
+  if(raw){
+    try{
+      const parsed = JSON.parse(raw);
+      state = Object.assign(state, parsed);
+    }catch(e){ console.warn('fail load', e); }
+  }
+}
+/* טענת מצב בראש */
+loadState();
+
+/* ====== UI references ====== */
+const expDisplay = document.getElementById('exp-display');
+const expBar = document.getElementById('exp-bar');
+const toNext = document.getElementById('to-next');
+const dollarsEl = document.getElementById('dollars');
+const clickValEl = document.getElementById('click-value');
+const ppsEl = document.getElementById('pps');
+const clickBtn = document.getElementById('click-btn');
+
+const shopBtn = document.getElementById('shop-btn');
+const shopModal = document.getElementById('shop-modal');
+const closeShopBtn = document.getElementById('close-shop');
+const shopGrid = document.getElementById('shop-grid');
+const buySelectedBtn = document.getElementById('buy-selected');
+
+const buyUpgradeBtn = document.getElementById('buy-upgrade');
+const upgradeLevelEl = document.getElementById('upgrade-level');
+const upgradeDescEl = document.getElementById('upgrade-desc');
+const upgradeCostEl = document.getElementById('upgrade-cost');
+
+const resetBtn = document.getElementById('reset-btn');
+
+/* ====== חישובי PPS ====== */
+function computePps(){
+  let total = 0;
+  for(const it of SHOP_ITEMS){
+    const cnt = state.items[it.id] || 0;
+    total += cnt * it.pps;
+  }
+  return total;
+}
+function toNextDollar(){
+  // נשאר עד דולר הבא: תמיד 100 EXP -> 1 דולר
+  return 100 - state.exp;
+}
+
+/* ====== עדכון UI ====== */
+function updateUI(){
+  expDisplay.textContent = Math.floor(state.exp);
+  const pct = Math.min(100, (state.exp / 100) * 100);
+  expBar.style.width = pct + '%';
+  toNext.textContent = Math.max(0, toNextDollar());
+  dollarsEl.textContent = state.dollars;
+  clickValEl.textContent = state.clickValue;
+  ppsEl.textContent = computePps();
+
+  upgradeLevelEl.textContent = 'Lv.' + state.upgradeLevel;
+  upgradeDescEl.textContent = `+${state.upgradeLevel + 1} EXP ללחיצה`;
+  upgradeCostEl.textContent = Math.floor(upgradeCostForNext());
+
+  // shop grid refresh counts and button enabled state
+  renderShopGrid();
+
+  saveState();
+}
+
+/* ====== חנות: יצירת כרטיסים ודינמיקה ====== */
+function renderShopGrid(){
+  shopGrid.innerHTML = '';
+  for(const it of SHOP_ITEMS){
+    const cnt = state.items[it.id] || 0;
+    const card = document.createElement('div');
+    card.className = 'shop-item';
+    card.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h4>${it.name}</h4>
+        <div class="count">x${cnt}</div>
+      </div>
+      <div><small class="muted">${it.desc}</small></div>
+      <div class="muted">ייצור: <strong>${it.pps}</strong> EXP/שנייה</div>
+      <div class="buy-row">
+        <div class="muted">מחיר: <strong>${it.cost}</strong> דולרים</div>
+        <button class="btn buy-btn" data-id="${it.id}">קנה</button>
+      </div>
+    `;
+    shopGrid.appendChild(card);
+  }
+  // חיבור מאזינים לכפתורי קנייה
+  document.querySelectorAll('.buy-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      const id = b.dataset.id;
+      buyItem(id);
     });
+  });
+}
 
-    function updateDisplay() {
-      scoreDisplay.textContent = `EXP: ${exp} / 100`;
-      dollarsDisplay.textContent = `דולרים: ${dollars}`;
-      expBar.style.width = `${(exp / 100) * 100}%`;
-    }
+/* ====== קנייה / שדרוג ====== */
+function buyItem(id){
+  const it = SHOP_ITEMS.find(x => x.id === id);
+  if(!it) return;
+  if(state.dollars < it.cost){
+    flashMessage('אין מספיק דולרים לקנייה');
+    return;
+  }
+  state.dollars -= it.cost;
+  state.items[it.id] = (state.items[it.id] || 0) + 1;
+  flashMessage(`נכון — קנית ${it.name}!`);
+  updateUI();
+}
 
-    function showBigFeedback(text) {
-      bigFeedback.textContent = text;
-      bigFeedback.style.opacity = '1';
-      bigFeedback.style.transform = 'translate(-50%, -50%) scale(1.2)';
-      setTimeout(() => {
-        bigFeedback.style.opacity = '0';
-        bigFeedback.style.transform = 'translate(-50%, -50%) scale(1)';
-      }, 1000);
-    }
+function upgradeCostForNext(){
+  return Math.floor(UPGRADE_BASE_COST * Math.pow(UPGRADE_COST_MULT, state.upgradeLevel));
+}
+buyUpgradeBtn.addEventListener('click', () => {
+  const cost = upgradeCostForNext();
+  if(state.dollars < cost){
+    flashMessage('אין מספיק דולרים לשדרוג');
+    return;
+  }
+  state.dollars -= cost;
+  state.upgradeLevel++;
+  state.clickValue = 1 + state.upgradeLevel; // כל רמה מוסיפה 1 EXP
+  flashMessage(`שידרגת! EXP/לחיצה עולה ל־${state.clickValue}`);
+  updateUI();
+});
 
-    function playClickSound() {
-      clickSound.pause();
-      clickSound.currentTime = 0;
-      clickSound.play().catch(() => {});
-    }
-  </script>
+/* ====== לחיצה לקבלת EXP (כולל חלקיקים וקולות) ====== */
+const audioCtx = (typeof AudioContext !== 'undefined') ? new AudioContext() : null;
+function playClickSound(){
+  if(!audioCtx) return;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = 'sine';
+  o.frequency.setValueAtTime(600 + Math.random()*200, audioCtx.currentTime);
+  g.gain.setValueAtTime(0.02, audioCtx.currentTime);
+  o.connect(g); g.connect(audioCtx.destination);
+  o.start();
+  o.stop(audioCtx.currentTime + 0.06);
+}
+
+const particleCanvas = document.getElementById('particle-canvas');
+const pCtx = particleCanvas.getContext('2d');
+let particles = [];
+function resizeCanvas(){ particleCanvas.width = innerWidth; particleCanvas.height = innerHeight; }
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+function spawnParticles(x,y, color){
+  for(let i=0;i<18;i++){
+    particles.push({
+      x, y,
+      vx: (Math.random()-0.5)*6,
+      vy: (Math.random()-1.5)*6,
+      life: 40 + Math.random()*30,
+      r: 4 + Math.random()*4,
+      col: color || '#ffdd57'
+    });
+  }
+}
+
+function drawParticles(){
+  pCtx.clearRect(0,0,particleCanvas.width, particleCanvas.height);
+  for(let i=particles.length-1;i>=0;i--){
+    const p = particles[i];
+    p.life--;
+    p.x += p.vx; p.y += p.vy;
+    p.vy += 0.15;
+    p.vx *= 0.99;
+    p.r *= 0.995;
+    const alpha = Math.max(0, p.life/80);
+    pCtx.beginPath();
+    pCtx.fillStyle = hexWithAlpha(p.col, alpha);
+    pCtx.arc(p.x, p.y, Math.max(0.5,p.r), 0, Math.PI*2);
+    pCtx.fill();
+    if(p.life <= 0 || p.r < 0.6) particles.splice(i,1);
+  }
+  requestAnimationFrame(drawParticles);
+}
+drawParticles();
+
+function hexWithAlpha(hex, a){
+  // accept #rrggbb
+  const c = hex.replace('#','');
+  const r = parseInt(c.substring(0,2),16);
+  const g = parseInt(c.substring(2,4),16);
+  const b = parseInt(c.substring(4,6),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+clickBtn.addEventListener('click', (e) => {
+  // האתחול של AudioContext ברגע האינטראקציה (נדרש בדפדפנים)
+  if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  const gained = state.clickValue;
+  addExp(gained);
+  // חלקיקים סביב הכפתור
+  const rect = e.target.getBoundingClientRect();
+  spawnParticles(rect.left + rect.width/2, rect.top + rect.height/2, '#ffdd57');
+  playClickSound();
+});
+
+/* ====== הוספת EXP וטיפול בדולרים כשמגיעים ל-100 ====== */
+function addExp(amount){
+  state.exp += amount;
+  if(state.exp >= 100){
+    const extra = state.exp - 100;
+    state.dollars += 1;
+    state.exp = extra;
+    flashMessage('+1 דולרים!');
+    spawnParticles(innerWidth/2, innerHeight/2, '#ffd166');
+  }
+  updateUI();
+}
+
+/* ====== PPS - טריגר כל שניה ====== */
+let lastTick = Date.now();
+function passiveTick(){
+  const pps = computePps();
+  if(pps > 0){
+    addExp(pps);
+  }
+}
+setInterval(passiveTick, 1000);
+
+/* ====== חנות modal פתיחה/סגירה ====== */
+shopBtn.addEventListener('click', () => {
+  renderShopGrid();
+  shopModal.classList.remove('hidden');
+  shopModal.setAttribute('aria-hidden','false');
+});
+closeShopBtn.addEventListener('click', () => {
+  shopModal.classList.add('hidden');
+  shopModal.setAttribute('aria-hidden','true');
+});
+buySelectedBtn.addEventListener('click', ()=> {
+  // ברירת פעולה — לא בשימוש כרגע
+  flashMessage('בחר פריט ספציפי ללחוץ "קנה" לידו');
+});
+
+/* ====== איפוס מצב (אזהרה) ====== */
+resetBtn.addEventListener('click', ()=>{
+  if(!confirm('בטוח שברצונך לאפס? כל ההתקדמות תימחק.')) return;
+  state = { exp:0, dollars:0, clickValue:1, items:{}, upgradeLevel:0 };
+  updateUI();
+  flashMessage('המערכת אופסה');
+});
+
+/* ====== הודעות קצרות למשתמש ====== */
+let msgTimer = null;
+function flashMessage(txt){
+  // נחזור להשתמש באזור ה־header כדי להציג הודעה חמה
+  const header = document.querySelector('header');
+  let el = document.getElementById('flash-msg');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'flash-msg';
+    el.style.position = 'absolute';
+    el.style.left = '50%';
+    el.style.top = '8px';
+    el.style.transform = 'translateX(-50%)';
+    el.style.background = 'linear-gradient(90deg, rgba(124,255,234,0.12), rgba(106,108,255,0.12))';
+    el.style.color = '#DFF9F6';
+    el.style.padding = '8px 14px';
+    el.style.borderRadius = '12px';
+    el.style.border = '1px solid rgba(124,255,234,0.08)';
+    el.style.fontWeight = '700';
+    el.style.zIndex = '70';
+    el.style.pointerEvents = 'none';
+    header.appendChild(el);
+  }
+  el.textContent = txt;
+  el.style.opacity = '1';
+  if(msgTimer) clearTimeout(msgTimer);
+  msgTimer = setTimeout(()=>{ el.style.opacity = '0'; }, 1400);
+}
+
+/* ====== שמירת מצב תקופתית (והוספה של שמירה מיידית ב־unload) ====== */
+setInterval(saveState, 2500);
+window.addEventListener('beforeunload', saveState);
+
+/* ====== התחלה ====== */
+updateUI();
+
+/* ====== עזרות נוספות ====== */
+// אם יש פריטים כבר ברשימה — הצג אותם
+renderShopGrid();
+</script>
 </body>
 </html>

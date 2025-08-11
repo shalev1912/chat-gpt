@@ -101,15 +101,11 @@ let solution = [];
 let currentDifficulty = 'easy';
 
 document.getElementById('start-btn').addEventListener('click', startGame);
-document.getElementById('home-btn').addEventListener('click', goHome);
+document.getElementById('home-btn').addEventListener('click', () => {
+  window.location.href = "https://shalev1912.github.io/chat-gpt/home.html";
+});
 document.getElementById('check-btn').addEventListener('click', checkBoard);
 document.getElementById('hint-btn').addEventListener('click', giveHint);
-
-function goHome() {
-  clearInterval(timerInterval);
-  document.getElementById('game-screen').classList.add('hidden');
-  document.getElementById('home-screen').classList.remove('hidden');
-}
 
 function startGame() {
   currentDifficulty = document.getElementById('difficulty').value;

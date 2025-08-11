@@ -7,60 +7,115 @@
 <!-- css של הלוח -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chessboardjs@1.0.0/dist/chessboard.min.css" />
 <style>
+  /* עיצוב כללי */
   body {
-    font-family: Arial, sans-serif;
-    background-color: #202020;
-    color: #eee;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1f1c2c, #928dab);
+    color: #f0f0f5;
     text-align: center;
-    padding: 20px;
+    padding: 20px 10px;
     user-select: none;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  h1 {
+    margin-bottom: 12px;
+    font-weight: 700;
+    font-size: 2.2rem;
+    letter-spacing: 1.1px;
+    text-shadow: 0 0 5px #fff6, 0 0 10px #9f91ff;
   }
   #board {
-    width: 400px;
+    width: 100%;
+    max-width: 480px;
     margin: 20px auto;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
   }
   #status {
-    margin: 10px;
-    font-size: 18px;
+    margin: 15px auto 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+    min-height: 28px;
+    color: #ffecb3;
+    text-shadow: 0 0 8px #fff2aa;
   }
   #controls {
-    margin: 20px auto;
+    margin: 25px auto 0;
     display: flex;
     justify-content: center;
-    gap: 15px;
+    gap: 16px;
+    flex-wrap: wrap;
+    max-width: 520px;
   }
-  button {
-    padding: 10px 15px;
-    font-size: 16px;
-    background-color: #444;
-    color: #eee;
+  button, select {
+    padding: 12px 18px;
+    font-size: 1rem;
+    border-radius: 8px;
     border: none;
-    border-radius: 6px;
     cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+    background-color: #6a63ff;
+    color: white;
+    user-select: none;
+  }
+  button:hover:not(:disabled), select:hover {
+    background-color: #8e85ff;
+    box-shadow: 0 6px 12px rgba(138,133,255,0.8);
   }
   button:disabled {
-    background-color: #777;
+    background-color: #444466;
     cursor: not-allowed;
+    box-shadow: none;
   }
   select {
-    font-size: 16px;
-    padding: 6px;
+    min-width: 160px;
+  }
+
+  /* מצב טעינה כשהבוט חושב */
+  #status.loading {
+    color: #a3d2ca;
+    text-shadow: 0 0 10px #5ee0b8;
+  }
+
+  /* רספונסיביות */
+  @media (max-width: 500px) {
+    #controls {
+      flex-direction: column;
+      gap: 12px;
+      max-width: 90vw;
+    }
+    button, select {
+      width: 100%;
+      box-sizing: border-box;
+    }
+    #board {
+      max-width: 90vw;
+      width: 100%;
+    }
   }
 </style>
 </head>
 <body>
+
 <h1>משחק שחמט - 2 שחקנים או מול בוט</h1>
+
 <div id="board"></div>
-<div id="status"></div>
-<div id="controls">
-  <button id="btnPvP">שחק 2 שחקנים</button>
-  <button id="btnPvBot">שחק מול בוט</button>
-  <select id="botLevel" title="רמת הבוט">
+<div id="status" aria-live="polite" aria-atomic="true"></div>
+
+<div id="controls" role="region" aria-label="בקרות משחק">
+  <button id="btnPvP" type="button" aria-pressed="true">שחק 2 שחקנים</button>
+  <button id="btnPvBot" type="button" aria-pressed="false">שחק מול בוט</button>
+  <select id="botLevel" title="בחר רמת קושי לבוט" aria-label="רמת קושי לבוט" disabled>
     <option value="random">רנדומלי (קל)</option>
     <option value="easy">קל - חיפוש עומק 1</option>
     <option value="medium" selected>בינוני - חיפוש עומק 2</option>
   </select>
-  <button id="btnRestart">התחל מחדש</button>
+  <button id="btnRestart" type="button" aria-label="התחל משחק מחדש">התחל מחדש</button>
 </div>
 
 <!-- ספריית chess.js -->
@@ -81,14 +136,15 @@
 
   let gameMode = 'pvp'; // pvp או pvbot
   let botLevel = botLevelSelect.value;
-  let playerColor = 'w'; // הצבע של השחקן מול בוט (לבן תמיד)
+  const playerColor = 'w'; // הצבע של השחקן מול הבוט (לבן תמיד)
   let isGameOver = false;
+  let isBotThinking = false;
 
   // הפעלת הלוח
   function onDragStart(source, piece, position, orientation) {
-    if (isGameOver) return false;
+    if (isGameOver || isBotThinking) return false;
 
-    // לא לאפשר להזיז את כלים של היריב
+    // לא לאפשר להזיז את הכלים של היריב
     if (game.turn() !== playerColor && gameMode === 'pvbot') {
       return false;
     }
@@ -100,7 +156,7 @@
   }
 
   function onDrop(source, target) {
-    if (isGameOver) return 'snapback';
+    if (isGameOver || isBotThinking) return 'snapback';
 
     const move = game.move({
       from: source,
@@ -114,7 +170,7 @@
     updateStatus();
 
     if (gameMode === 'pvbot' && !isGameOver) {
-      window.setTimeout(makeBotMove, 250);
+      makeBotMove();
     }
   }
 
@@ -124,11 +180,10 @@
 
   function updateStatus() {
     let status = '';
-
     let moveColor = game.turn() === 'w' ? 'לבן' : 'שחור';
 
     if (game.in_checkmate()) {
-      status = 'שחמט - ' + (moveColor === 'לבן' ? 'שחור' : 'לבן') + ' ניצח!';
+      status = 'שחמט! ניצח ' + (moveColor === 'לבן' ? 'שחור' : 'לבן') + '!';
       isGameOver = true;
     } else if (game.in_draw()) {
       status = 'תיקו!';
@@ -139,12 +194,17 @@
       status = 'תור ל-' + moveColor;
     }
 
-    statusEl.innerText = status;
+    statusEl.textContent = status;
+    if (isBotThinking) {
+      statusEl.classList.add('loading');
+    } else {
+      statusEl.classList.remove('loading');
+    }
   }
 
-  // הפעלת הלוח
+  // הפעלת הלוח מחדש
   function initBoard() {
-    if(board) board.destroy();
+    if (board) board.destroy();
 
     board = Chessboard(boardElement, {
       draggable: true,
@@ -152,35 +212,46 @@
       onDragStart: onDragStart,
       onDrop: onDrop,
       onSnapEnd: onSnapEnd,
-      pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+      pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
+      // עיצוב מודרני קצת (אפשר לשנות)
+      // ניתן להוסיף קונפיגורציות מתקדמות כאן
     });
   }
 
-  // בוט רנדומלי - מחפש מהלכים חוקיים ומבצע אחד מהם
+  // בוט - מבצע מהלך לפי רמת הקושי
   function makeBotMove() {
     if (isGameOver) return;
     if (game.turn() !== 'b') return; // הבוט משחק בשחור
 
-    let moves = game.moves();
-    if (moves.length === 0) return;
-
-    let move = null;
-
-    if (botLevel === 'random') {
-      move = moves[Math.floor(Math.random() * moves.length)];
-    } else {
-      // חיפוש מינימקס עומק 1 או 2
-      const depth = botLevel === 'easy' ? 1 : 2;
-      move = minimaxRoot(depth, game, true);
-    }
-
-    game.move(move);
-    board.position(game.fen());
+    isBotThinking = true;
     updateStatus();
+
+    // זמן המתנה מדומה לחישוב הבוט
+    setTimeout(() => {
+      let moves = game.moves();
+      if (moves.length === 0) {
+        isBotThinking = false;
+        updateStatus();
+        return;
+      }
+
+      let move = null;
+      if (botLevel === 'random') {
+        move = moves[Math.floor(Math.random() * moves.length)];
+      } else {
+        const depth = botLevel === 'easy' ? 1 : 2;
+        move = minimaxRoot(depth, game, true);
+      }
+
+      game.move(move);
+      board.position(game.fen());
+
+      isBotThinking = false;
+      updateStatus();
+    }, 700); // הבוט "חושב" 700ms
   }
 
-  // פונקציות מינימקס (פשוטות) להערכת הלוח
-
+  // פונקציות מינימקס להערכת הלוח (כמו שלך)
   const pieceValues = {
     p: 10,
     n: 30,
@@ -253,11 +324,17 @@
   // כפתורים
   btnPvP.addEventListener('click', () => {
     gameMode = 'pvp';
+    btnPvP.setAttribute('aria-pressed', 'true');
+    btnPvBot.setAttribute('aria-pressed', 'false');
+    botLevelSelect.disabled = true;
     startGame();
   });
 
   btnPvBot.addEventListener('click', () => {
     gameMode = 'pvbot';
+    btnPvP.setAttribute('aria-pressed', 'false');
+    btnPvBot.setAttribute('aria-pressed', 'true');
+    botLevelSelect.disabled = false;
     botLevel = botLevelSelect.value;
     startGame();
   });
@@ -268,16 +345,21 @@
 
   botLevelSelect.addEventListener('change', () => {
     botLevel = botLevelSelect.value;
+    if (gameMode === 'pvbot') {
+      startGame();
+    }
   });
 
   // התחלת משחק חדש
   function startGame() {
     game.reset();
     isGameOver = false;
+    isBotThinking = false;
     updateStatus();
     board.position(game.fen());
-    if(gameMode === 'pvbot' && game.turn() !== playerColor){
-      // אם תור הבוט בתחילת המשחק (שחור)
+
+    // אם הבוט מתחיל
+    if (gameMode === 'pvbot' && game.turn() !== playerColor) {
       makeBotMove();
     }
   }

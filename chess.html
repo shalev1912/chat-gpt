@@ -237,7 +237,7 @@
   btnPvBot.onclick = () => { gameMode = 'pvbot'; botLevel = botLevelSelect.value; updateControlsUI(); startGame(); };
   btnRestart.onclick = () => startGame();
   botLevelSelect.onchange = (e) => { botLevel = e.target.value; };
-  btnHome.onclick = () => { window.location.href = 'index.html'; };
+  btnHome.onclick = () => { window.location.href = '/index.html'; };
 
   function startGame() {
     game = new Chess();

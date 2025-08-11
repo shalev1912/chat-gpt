@@ -4,136 +4,28 @@
 <meta charset="utf-8" />
 <title>משחק שחמט - 2 שחקנים ובוט</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<!-- css של הלוח -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chessboardjs@1.0.0/dist/chessboard.min.css" />
 <style>
-  /* רקע גרדיאנט מתחלף */
-  @keyframes bgGradient {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }
-
+  @keyframes bgGradient { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
   body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(-45deg, #1e3c72, #2a5298, #4b6cb7, #182848);
-    background-size: 400% 400%;
-    animation: bgGradient 20s ease infinite;
-    color: #d0d6f9;
-    text-align: center;
-    padding: 25px;
-    user-select: none;
+    background-size: 400% 400%; animation: bgGradient 20s ease infinite;
+    color: #d0d6f9; text-align: center; padding: 25px; user-select: none;
   }
-
-  h1 {
-    font-weight: 700;
-    font-size: 2.4rem;
-    margin-bottom: 15px;
-    text-shadow: 0 0 6px #6a63ffaa;
-    letter-spacing: 0.06em;
-  }
-
-  #board {
-    width: 400px;
-    margin: 20px auto;
-    border-radius: 14px;
-    box-shadow: 0 8px 24px rgba(106, 99, 255, 0.3);
-  }
-
-  /* לוח עם גבולות ועיצוב מעט כהה */
-  .chessboard {
-    border-radius: 14px !important;
-    box-shadow: 0 10px 20px rgba(106, 99, 255, 0.3);
-  }
-
-  /* סטטוס עם אנימציית קפיצה עדינה */
-  #status {
-    margin: 18px auto;
-    font-size: 20px;
-    font-weight: 600;
-    color: #a3b1ff;
-    text-shadow: 0 0 4px #8e8dff88;
-    animation: pulse 2.5s infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { transform: translateY(0); color: #a3b1ff; }
-    50% { transform: translateY(-3px); color: #c3c9ff; }
-  }
-
-  #controls {
-    margin: 25px auto 0;
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    flex-wrap: wrap;
-  }
-
-  button {
-    padding: 12px 18px;
-    font-size: 17px;
-    font-weight: 600;
-    background-color: #4b6cb7;
-    color: #eef1ff;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    user-select: none;
-    box-shadow: 0 3px 8px rgba(75, 108, 183, 0.4);
-    transition:
-      background-color 0.3s ease,
-      box-shadow 0.3s ease,
-      transform 0.15s ease;
-  }
-
-  button:hover:not(:disabled) {
-    background-color: #5f7fd6;
-    box-shadow: 0 5px 14px #7a91dfaa;
-    transform: translateY(-2px);
-  }
-
-  button:active:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 3px 10px #5a70ccaa;
-  }
-
-  button.active {
-    background-color: #6a7fd6;
-    box-shadow: 0 0 10px #a3aaffaa;
-  }
-
-  button:disabled {
-    background-color: #72768d;
-    box-shadow: none;
-    cursor: not-allowed;
-    color: #b0b3c6;
-  }
-
-  select {
-    font-size: 16px;
-    padding: 8px 12px;
-    border-radius: 10px;
-    border: 2px solid #5f72be;
-    background-color: #394b82;
-    color: #dbe1ff;
-    font-weight: 600;
-    box-shadow: 0 3px 10px rgba(95, 114, 190, 0.5);
-    transition: border-color 0.3s ease, background-color 0.3s ease;
-    cursor: pointer;
-  }
-
-  select:focus:not(:disabled) {
-    outline: none;
-    border-color: #6a7fd6;
-    background-color: #4b5cbf;
-  }
-
-  select:disabled {
-    background-color: #3b4262;
-    border-color: #666d8a;
-    color: #8b8fbd;
-    cursor: not-allowed;
-  }
+  h1 { font-weight: 700; font-size: 2.2rem; margin-bottom: 12px; text-shadow: 0 0 6px #6a63ffaa; }
+  #board { width: 400px; margin: 20px auto; border-radius: 14px; box-shadow: 0 8px 24px rgba(106,99,255,0.3); }
+  .chessboard { border-radius: 14px !important; box-shadow: 0 10px 20px rgba(106,99,255,0.3); }
+  #status { margin: 18px auto; font-size: 20px; font-weight: 600; color: #a3b1ff; text-shadow: 0 0 4px #8e8dff88; animation: pulse 2.5s infinite; }
+  @keyframes pulse { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+  #controls { margin: 25px auto 0; display:flex; justify-content:center; gap:15px; flex-wrap:wrap; }
+  button { padding:12px 18px; font-size:17px; font-weight:600; background-color:#4b6cb7; color:#eef1ff; border:none; border-radius:12px; cursor:pointer; user-select:none; box-shadow:0 3px 8px rgba(75,108,183,0.4); transition:background-color .3s, box-shadow .3s, transform .15s; }
+  button:hover:not(:disabled){ background-color:#5f7fd6; transform:translateY(-2px); }
+  button.active{ background-color:#6a7fd6; box-shadow:0 0 10px #a3aaffaa; }
+  button:disabled{ background-color:#72768d; cursor:not-allowed; color:#b0b3c6; box-shadow:none; }
+  select { font-size:16px; padding:8px 12px; border-radius:10px; border:2px solid #5f72be; background-color:#394b82; color:#dbe1ff; font-weight:600; box-shadow:0 3px 10px rgba(95,114,190,0.5); }
+  select:disabled { background-color:#3b4262; border-color:#666d8a; color:#8b8fbd; }
+  @media (max-width:420px){ #board{width:320px;} }
 </style>
 </head>
 <body>
@@ -152,31 +44,32 @@
   <button id="btnHome" type="button">מסך בית</button>
 </div>
 
-<!-- ספריית chess.js -->
+<!-- ספריות -->
 <script src="https://cdn.jsdelivr.net/npm/chess.js@1.0.0/chess.min.js"></script>
-<!-- ספריית chessboard.js -->
 <script src="https://cdn.jsdelivr.net/npm/chessboardjs@1.0.0/dist/chessboard.min.js"></script>
 
 <script>
-  const boardElement = document.getElementById('board');
+  // אלמנטים
   const statusEl = document.getElementById('status');
   const btnPvP = document.getElementById('btnPvP');
   const btnPvBot = document.getElementById('btnPvBot');
   const btnRestart = document.getElementById('btnRestart');
-  const botLevelSelect = document.getElementById('botLevel');
   const btnHome = document.getElementById('btnHome');
+  const botLevelSelect = document.getElementById('botLevel');
 
+  // מצב משחק
   let board = null;
   let game = new Chess();
-
   let gameMode = 'pvp'; // 'pvp' או 'pvbot'
   let botLevel = botLevelSelect.value;
-  let playerColor = 'w'; // הצבע של השחקן מול בוט (לבן תמיד)
+  const playerColor = 'w'; // כששחקן משחק מול הבוט - השחקן ישחק לבן, הבוט שחור
   let isGameOver = false;
 
-  // עדכון מצב כפתורים ו-select בהתאם למצב המשחק
-  function updateControlsUI() {
-    if (gameMode === 'pvp') {
+  // ערכים לחישוב מינימקס
+  const pieceValues = { p:10, n:30, b:30, r:50, q:90, k:900 };
+
+  function updateControlsUI(){
+    if(gameMode === 'pvp'){
       btnPvP.classList.add('active');
       btnPvBot.classList.remove('active');
       botLevelSelect.disabled = true;
@@ -187,52 +80,13 @@
     }
   }
 
-  // הפעלת הלוח
-  function onDragStart(source, piece, position, orientation) {
-    if (isGameOver) return false;
-
-    // לא לאפשר להזיז כלים של היריב
-    if (game.turn() !== playerColor && gameMode === 'pvbot') {
-      return false;
-    }
-
-    // 2 שחקנים - לא ניתן להזיז כלים של היריב
-    if (gameMode === 'pvp' && piece[0] !== game.turn()) {
-      return false;
-    }
-  }
-
-  function onDrop(source, target) {
-    if (isGameOver) return 'snapback';
-
-    const move = game.move({
-      from: source,
-      to: target,
-      promotion: 'q' // קידום אוטומטי למלכה
-    });
-
-    // מהלך לא חוקי
-    if (move === null) return 'snapback';
-
-    updateStatus();
-
-    if (gameMode === 'pvbot' && !isGameOver) {
-      window.setTimeout(makeBotMove, 250);
-    }
-  }
-
-  function onSnapEnd() {
-    board.position(game.fen());
-  }
-
-  function updateStatus() {
+  function updateStatus(){
     let status = '';
-    let moveColor = game.turn() === 'w' ? 'לבן' : 'שחור';
-
+    const moveColor = game.turn() === 'w' ? 'לבן' : 'שחור';
     if (game.in_checkmate()) {
       status = 'שחמט - ' + (moveColor === 'לבן' ? 'שחור' : 'לבן') + ' ניצח!';
       isGameOver = true;
-    } else if (game.in_draw()) {
+    } else if (game.in_draw() || game.in_stalemate() || game.in_threefold_repetition() || game.insufficient_material) {
       status = 'תיקו!';
       isGameOver = true;
     } else if (game.in_check()) {
@@ -240,161 +94,179 @@
     } else {
       status = 'תור ל-' + moveColor;
     }
-
     statusEl.innerText = status;
   }
 
-  // אתחול הלוח
-  function initBoard() {
-    if (board) board.destroy();
+  // אירועים ללוח
+  function onDragStart(source, piece, position, orientation) {
+    if (isGameOver) return false;
+    // אם אין כלי שניסו לגרור
+    if (!piece) return false;
 
-    board = Chessboard(boardElement, {
-      draggable: true,
-      position: 'start',
-      onDragStart: onDragStart,
-      onDrop: onDrop,
-      onSnapEnd: onSnapEnd,
-      pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
-    });
-  }
-
-  // מהלך בוט
-  function makeBotMove() {
-    if (isGameOver) return;
-    if (game.turn() !== 'b') return; // הבוט משחק בשחור
-
-    let moves = game.moves();
-    if (moves.length === 0) return;
-
-    let move = null;
-
-    if (botLevel === 'random') {
-      move = moves[Math.floor(Math.random() * moves.length)];
-    } else {
-      const depth = botLevel === 'easy' ? 1 : 2;
-      move = minimaxRoot(depth, game, true);
+    // במצב PvBot — לא לאפשר להזיז כשזה לא תור השחקן (השחקן לבן)
+    if (gameMode === 'pvbot') {
+      // רק אם תור השחור (הבוט) — חסום
+      if (game.turn() !== playerColor) return false;
     }
 
-    game.move(move);
-    board.position(game.fen());
-    updateStatus();
+    // במצב PvP — לא לאפשר להזיז כלים שלא שייכים לשחקן שמסומן בתור
+    if (gameMode === 'pvp') {
+      if (piece[0] !== game.turn()) return false;
+    }
   }
 
-  // פונקציות מינימקס להערכת הלוח
-  const pieceValues = {
-    p: 10,
-    n: 30,
-    b: 30,
-    r: 50,
-    q: 90,
-    k: 900
-  };
+  function onDrop(source, target) {
+    if (isGameOver) return 'snapback';
+    const move = game.move({ from: source, to: target, promotion: 'q' });
+    if (move === null) return 'snapback';
+    board.position(game.fen());
+    updateStatus();
 
-  function evaluateBoard(game) {
-    const board = game.board();
-    let totalEvaluation = 0;
-    for (let row of board) {
-      for (let piece of row) {
-        if (piece !== null) {
-          const value = pieceValues[piece.type];
-          totalEvaluation += piece.color === 'w' ? value : -value;
+    // אם מול בוט — לתת לבוט לזוז (אם לא סיום)
+    if (gameMode === 'pvbot' && !isGameOver) {
+      setTimeout(makeBotMove, 220);
+    }
+  }
+
+  function onSnapEnd() {
+    board.position(game.fen());
+  }
+
+  // אתחול הלוח — שימו לב: chessboardjs ציפתה לקבל מזהה אלמנט כ-string
+  function initBoard() {
+    try {
+      if (board) board.destroy();
+      board = Chessboard('board', {
+        draggable: true,
+        position: 'start',
+        onDragStart: onDragStart,
+        onDrop: onDrop,
+        onSnapEnd: onSnapEnd,
+        pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+      });
+    } catch (e) {
+      console.error('שגיאה באתחול הלוח:', e);
+      alert('שגיאה באתחול לוח השח מט — בדוק חיבור לאינטרנט לספריות או את קונסול הדפדפן.');
+    }
+  }
+
+  // פונקציות הערכת לוח ומינימקס
+  function evaluateBoard(gameInstance) {
+    const b = gameInstance.board();
+    let total = 0;
+    for (let row of b) {
+      for (let p of row) {
+        if (p !== null) {
+          total += (p.color === 'w' ? 1 : -1) * (pieceValues[p.type] || 0);
         }
       }
     }
-    return totalEvaluation;
+    return total;
   }
 
-  function minimax(depth, game, isMaximizingPlayer) {
-    if (depth === 0 || game.game_over()) {
-      return evaluateBoard(game);
+  function minimax(depth, gameInstance, isMaximizingPlayer) {
+    if (depth === 0 || gameInstance.game_over()) {
+      return evaluateBoard(gameInstance);
     }
-
-    const moves = game.moves();
-
+    const moves = gameInstance.moves();
     if (isMaximizingPlayer) {
       let maxEval = -Infinity;
       for (let i = 0; i < moves.length; i++) {
-        game.move(moves[i]);
-        const evalScore = minimax(depth - 1, game, false);
-        game.undo();
-        maxEval = Math.max(maxEval, evalScore);
+        gameInstance.move(moves[i]);
+        const evalScore = minimax(depth - 1, gameInstance, false);
+        gameInstance.undo();
+        if (evalScore > maxEval) maxEval = evalScore;
       }
       return maxEval;
     } else {
       let minEval = Infinity;
       for (let i = 0; i < moves.length; i++) {
-        game.move(moves[i]);
-        const evalScore = minimax(depth - 1, game, true);
-        game.undo();
-        minEval = Math.min(minEval, evalScore);
+        gameInstance.move(moves[i]);
+        const evalScore = minimax(depth - 1, gameInstance, true);
+        gameInstance.undo();
+        if (evalScore < minEval) minEval = evalScore;
       }
       return minEval;
     }
   }
 
-  function minimaxRoot(depth, game, isMaximizingPlayer) {
-    const moves = game.moves();
-    let bestMove = null;
+  function minimaxRoot(depth, gameInstance, isMaximizingPlayer) {
+    const moves = gameInstance.moves();
+    let bestMove = moves[0];
     let bestValue = -Infinity;
-
     for (let i = 0; i < moves.length; i++) {
-      game.move(moves[i]);
-      let boardValue = minimax(depth - 1, game, !isMaximizingPlayer);
-      game.undo();
-      if (boardValue > bestValue) {
-        bestValue = boardValue;
-        bestMove = moves[i];
-      }
+      gameInstance.move(moves[i]);
+      const val = minimax(depth - 1, gameInstance, !isMaximizingPlayer);
+      gameInstance.undo();
+      if (val > bestValue) { bestValue = val; bestMove = moves[i]; }
     }
-
     return bestMove;
   }
 
-  // אירועי לחיצה לכפתורים
+  // מהלך הבוט
+  function makeBotMove() {
+    if (isGameOver) return;
+    if (game.turn() !== 'b') return; // הבוט משחק בשחור
+    const moves = game.moves();
+    if (moves.length === 0) return;
+
+    let chosen = null;
+    if (botLevel === 'random') {
+      chosen = moves[Math.floor(Math.random() * moves.length)];
+    } else {
+      const depth = botLevel === 'easy' ? 1 : 2;
+      chosen = minimaxRoot(depth, game, true);
+    }
+
+    game.move(chosen);
+    board.position(game.fen());
+    updateStatus();
+  }
+
+  // אירועי כפתורים
   btnPvP.addEventListener('click', () => {
     gameMode = 'pvp';
-    botLevelSelect.disabled = true;
     updateControlsUI();
     startGame();
   });
 
   btnPvBot.addEventListener('click', () => {
     gameMode = 'pvbot';
-    botLevelSelect.disabled = false;
     botLevel = botLevelSelect.value;
     updateControlsUI();
     startGame();
   });
 
-  btnRestart.addEventListener('click', () => {
-    startGame();
-  });
+  btnRestart.addEventListener('click', () => startGame());
 
-  botLevelSelect.addEventListener('change', () => {
-    botLevel = botLevelSelect.value;
+  botLevelSelect.addEventListener('change', (e) => {
+    botLevel = e.target.value;
   });
 
   btnHome.addEventListener('click', () => {
+    // שנה כאן לכתובת הבית שלך
     window.location.href = 'https://shalev1912.github.io/chat-gpt/home.html';
   });
 
   // התחלת משחק חדש
   function startGame() {
-    game.reset();
+    game = new Chess();
     isGameOver = false;
     updateStatus();
+    board.start(); // מחזיר את הלוח למצב התחלתי
     board.position(game.fen());
+    // אם בחרת במצב pvbot והבוט צריך להתחיל — אפשר לגרום לו לזוז
     if (gameMode === 'pvbot' && game.turn() !== playerColor) {
-      // אם תור הבוט בתחילת המשחק (שחור)
-      makeBotMove();
+      setTimeout(makeBotMove, 200);
     }
   }
 
-  // אתחול
-  initBoard();
-  updateControlsUI();
-  startGame();
+  // אתחול כשטעינה הסתיימה
+  window.addEventListener('load', () => {
+    initBoard();
+    updateControlsUI();
+    startGame();
+  });
 </script>
-
 </body>
 </html>

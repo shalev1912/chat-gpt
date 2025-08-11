@@ -186,7 +186,7 @@
         </div>
         <div>
           <h1>מרכז המשחקים</h1>
-          <p class="subtitle">קישור מהיר למשחקים — קליקים, טריוויה וסודוקו • עיצוב נקי ורספונסיבי</p>
+          <p class="subtitle">קישור מהיר למשחקים — קליקים, טריוויה, סודוקו ושחמט • עיצוב נקי ורספונסיבי</p>
         </div>
       </div>
 
@@ -259,6 +259,25 @@
           <div class="play">שחק ▶</div>
         </div>
       </a>
+
+      <!-- Chess Card -->
+      <a class="card" href="https://shalev1912.github.io/chat-gpt/chess.html" role="link" aria-label="פתח משחק השחמט">
+        <div class="thumb" aria-hidden="true">
+          <!-- chess SVG icon (custom) -->
+          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" fill="none" stroke="white" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+            <path d="M20 52h24M28 44h8M24 36h16M32 16v20" />
+            <rect x="18" y="12" width="28" height="8" fill="rgba(255,255,255,0.06)" rx="4" ry="4"/>
+            <circle cx="32" cy="26" r="4" fill="white" opacity="0.9"/>
+          </svg>
+        </div>
+        <div class="meta">
+          <h3>משחק השחמט</h3>
+          <p>שחק שחמט עם עיצוב נקי ומאתגר!</p>
+        </div>
+        <div>
+          <div class="play">שחק ▶</div>
+        </div>
+      </a>
     </section>
 
     <footer class="sitefoot">
@@ -277,4 +296,63 @@
     document.getElementById('year').textContent = new Date().getFullYear();
 
     // Particle effect (simple) - toggleable
-    const canvas = document.getElementBy
+    const canvas = document.getElementById('particle-canvas');
+    const ctx = canvas.getContext('2d');
+    let particlesEnabled = false;
+    let particles = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function createParticle() {
+      return {
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        radius: Math.random() * 2 + 1,
+        speedX: (Math.random() - 0.5) * 0.3,
+        speedY: (Math.random() - 0.5) * 0.3,
+        alpha: 0.15
+      };
+    }
+
+    function initParticles(num = 80) {
+      particles = [];
+      for (let i = 0; i < num; i++) {
+        particles.push(createParticle());
+      }
+    }
+
+    function drawParticles() {
+      if (!particlesEnabled) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let p of particles) {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${p.alpha})`;
+        ctx.fill();
+
+        p.x += p.speedX;
+        p.y += p.speedY;
+
+        if (p.x < 0 || p.x > canvas.width) p.speedX *= -1;
+        if (p.y < 0 || p.y > canvas.height) p.speedY *= -1;
+      }
+      requestAnimationFrame(drawParticles);
+    }
+
+    document.getElementById('particlesToggle').addEventListener('click', () => {
+      particlesEnabled = !particlesEnabled;
+      if (particlesEnabled) {
+        canvas.style.display = 'block';
+        initParticles();
+        drawParticles();
+      } else {
+        canvas.style.display = 'none';
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    });
+

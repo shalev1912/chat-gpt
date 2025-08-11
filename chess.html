@@ -7,50 +7,132 @@
 <!-- css של הלוח -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chessboardjs@1.0.0/dist/chessboard.min.css" />
 <style>
+  /* רקע גרדיאנט מתחלף */
+  @keyframes bgGradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
   body {
-    font-family: Arial, sans-serif;
-    background-color: #202020;
-    color: #eee;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(-45deg, #1e3c72, #2a5298, #4b6cb7, #182848);
+    background-size: 400% 400%;
+    animation: bgGradient 20s ease infinite;
+    color: #d0d6f9;
     text-align: center;
-    padding: 20px;
+    padding: 25px;
     user-select: none;
   }
+
+  h1 {
+    font-weight: 700;
+    font-size: 2.4rem;
+    margin-bottom: 15px;
+    text-shadow: 0 0 12px #6a63ffaa;
+    letter-spacing: 0.06em;
+  }
+
   #board {
     width: 400px;
     margin: 20px auto;
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(106, 99, 255, 0.5);
   }
+
+  /* לוח עם גבולות ועיצוב מעט כהה */
+  .chessboard {
+    border-radius: 14px !important;
+    box-shadow: 0 10px 20px rgba(106, 99, 255, 0.5);
+  }
+
+  /* סטטוס עם אנימציית קפיצה עדינה */
   #status {
-    margin: 10px;
-    font-size: 18px;
+    margin: 18px auto;
+    font-size: 20px;
+    font-weight: 600;
+    color: #a3b1ff;
+    text-shadow: 0 0 6px #8e8dff88;
+    animation: pulse 2.5s infinite;
   }
+
+  @keyframes pulse {
+    0%, 100% { transform: translateY(0); color: #a3b1ff; }
+    50% { transform: translateY(-5px); color: #c3c9ff; }
+  }
+
   #controls {
-    margin: 20px auto;
+    margin: 25px auto 0;
     display: flex;
     justify-content: center;
     gap: 15px;
     flex-wrap: wrap;
   }
+
   button {
-    padding: 10px 15px;
-    font-size: 16px;
-    background-color: #444;
-    color: #eee;
+    padding: 12px 18px;
+    font-size: 17px;
+    font-weight: 600;
+    background-color: #4b6cb7;
+    color: #eef1ff;
     border: none;
-    border-radius: 6px;
+    border-radius: 12px;
     cursor: pointer;
     user-select: none;
+    box-shadow: 0 4px 12px rgba(75, 108, 183, 0.6);
+    transition:
+      background-color 0.3s ease,
+      box-shadow 0.3s ease,
+      transform 0.2s ease;
   }
-  button.active {
+
+  button:hover:not(:disabled) {
     background-color: #6a63ff;
-    box-shadow: 0 0 8px #958aff;
+    box-shadow: 0 6px 20px #958aff;
+    transform: translateY(-3px);
   }
+
+  button:active:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px #7a70ff;
+  }
+
+  button.active {
+    background-color: #958aff;
+    box-shadow: 0 0 15px #a3aaffcc;
+  }
+
   button:disabled {
-    background-color: #777;
+    background-color: #72768d;
+    box-shadow: none;
     cursor: not-allowed;
+    color: #b0b3c6;
   }
+
   select {
     font-size: 16px;
-    padding: 6px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 2px solid #5f72be;
+    background-color: #394b82;
+    color: #dbe1ff;
+    font-weight: 600;
+    box-shadow: 0 3px 10px rgba(95, 114, 190, 0.7);
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+    cursor: pointer;
+  }
+
+  select:focus:not(:disabled) {
+    outline: none;
+    border-color: #958aff;
+    background-color: #4b5cbf;
+  }
+
+  select:disabled {
+    background-color: #3b4262;
+    border-color: #666d8a;
+    color: #8b8fbd;
+    cursor: not-allowed;
   }
 </style>
 </head>

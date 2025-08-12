@@ -3,394 +3,435 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<title>משחק שחמט מקצועי - נגד שחקן או בוט</title>
+<title>משחק שחמט מקצועי - נגד שחקן או Stockfish</title>
 
-<!-- chessboardjs -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chessboardjs@1.0.0/dist/chessboard.min.css" />
-<script src="https://cdn.jsdelivr.net/npm/chessboardjs@1.0.0/dist/chessboard.min.js"></script>
+<!-- fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;800&display=swap" rel="stylesheet">
 
-<!-- chess.js -->
-<script src="https://cdn.jsdelivr.net/npm/chess.js@1.0.0/chess.min.js"></script>
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- chess.js (חייב להיות נטען לפני הקוד שמשתמש בו) -->
+<script src="https://cdn.jsdelivr.net/npm/chess.js@0.13.4/chess.min.js"></script>
+
+<!-- chessboard.js -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
+
+<!-- Stockfish (מנוע) - דרך unpkg (מייצר פונקציית STOCKFISH() או מאפשר new Worker) -->
+<script src="https://unpkg.com/stockfish/stockfish.js"></script>
 
 <style>
-  /* פונטים */
-  @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;600&display=swap');
-
-  * {
-    box-sizing: border-box;
-  }
+  * { box-sizing: border-box; }
   body {
-    margin: 0; padding: 0;
-    font-family: 'Heebo', sans-serif;
-    background: linear-gradient(135deg, #1f1c2c, #928dab);
-    color: #eee;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    align-items: center;
-    justify-content: flex-start;
-    padding: 20px;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    margin:0; padding:20px;
+    font-family: 'Heebo', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background: linear-gradient(135deg,#0f1724 0%, #2b213a 50%, #6b5b95 100%);
+    color: #f2f2f7;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
   }
 
   h1 {
-    font-weight: 600;
-    font-size: 2.4rem;
-    margin-bottom: 12px;
-    text-align: center;
-    letter-spacing: 0.05em;
-    user-select: none;
+    margin: 6px 0 16px 0;
+    font-size:2.1rem;
+    font-weight:800;
+    letter-spacing:0.03em;
+    text-align:center;
   }
 
   .controls {
-    width: 100%;
-    max-width: 480px;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 12px;
-    margin-bottom: 20px;
-    user-select: none;
+    width:100%;
+    max-width:980px;
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    justify-content:center;
+    align-items:center;
+    margin-bottom:18px;
   }
+  label { font-weight:700; margin-inline-end:6px; }
+  select, button, input[type="range"] {
+    padding:10px 14px;
+    border-radius:12px;
+    border:none;
+    background:#2f2b45;
+    color:#fff;
+    font-weight:700;
+    cursor:pointer;
+  }
+  button.primary { background:linear-gradient(180deg,#7b68ee,#5b3fd6); box-shadow:0 6px 18px rgba(91,63,214,0.28); }
+  button.ghost { background:transparent; border:1px solid rgba(255,255,255,0.06); color:#ddd; }
+  .control-group { display:flex; align-items:center; gap:8px; }
 
-  label {
-    font-weight: 600;
-    font-size: 1rem;
-    align-self: center;
-  }
-
-  select, button {
-    font-size: 1rem;
-    padding: 12px 18px;
-    border-radius: 14px;
-    border: none;
-    outline: none;
-    cursor: pointer;
-    transition: background-color 0.25s ease, box-shadow 0.25s ease;
-    font-weight: 600;
-    user-select: none;
-  }
-  select {
-    min-width: 150px;
-    background: #3c3a59;
-    color: #eee;
-  }
-  select:focus {
-    box-shadow: 0 0 10px #7b68eeaa;
-  }
-  button {
-    background: #7b68ee;
-    color: white;
-    box-shadow: 0 6px 12px #6a54d4bb;
-  }
-  button:hover:not(:disabled) {
-    background: #5a43cc;
-    box-shadow: 0 8px 20px #5a43cccc;
-  }
-  button:active:not(:disabled) {
-    transform: translateY(2px);
-  }
-  button:disabled {
-    background: #666;
-    cursor: not-allowed;
-    box-shadow: none;
-  }
-
-  /* לוח שחמט */
   #board {
-    width: 480px;
-    max-width: 90vw;
-    margin: 0 auto;
-    border-radius: 18px;
-    box-shadow:
-      0 6px 15px rgba(0,0,0,0.5),
-      inset 0 0 20px rgba(123,104,238,0.5);
-    animation: fadeIn 0.8s ease;
+    width:600px;
+    max-width:94vw;
+    border-radius:20px;
+    padding:10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6), inset 0 0 40px rgba(123,104,238,0.06);
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.04));
   }
 
-  /* הודעות סטטוס */
   #status {
-    margin-top: 16px;
-    min-height: 30px;
-    font-size: 1.25rem;
-    font-weight: 700;
-    text-align: center;
-    user-select: none;
-    padding: 8px 12px;
-    border-radius: 12px;
-    transition: background-color 0.4s ease;
+    margin-top:14px;
+    min-height:36px;
+    font-size:1.05rem;
+    font-weight:800;
+    text-align:center;
+    padding:8px 12px;
+    border-radius:12px;
+    max-width:94vw;
+    width:600px;
   }
-  #status.turn-white {
-    background-color: #6a87ff88;
-    color: #fff;
-  }
-  #status.turn-black {
-    background-color: #444466bb;
-    color: #ddd;
-  }
-  #status.check {
-    background-color: #f76c6ccc;
-    color: white;
-    text-shadow: 0 0 8px #ff4949bb;
-  }
-  #status.checkmate {
-    background-color: #e82c2ccc;
-    color: white;
-    text-shadow: 0 0 12px #ff0000cc;
-    font-size: 1.5rem;
-  }
-  #status.draw {
-    background-color: #bbbbaa99;
-    color: #333;
+  .turn-white { background: linear-gradient(90deg,#6a87ff55,#7b68ee55); color:#fff; }
+  .turn-black { background: linear-gradient(90deg,#44446655,#33334455); color:#eee; }
+  .check { background: linear-gradient(90deg,#ff6b6b66,#ff3b3b66); color:#fff; box-shadow:0 6px 20px rgba(255,50,50,0.12); }
+  .checkmate { background: linear-gradient(90deg,#ff3b3b99,#b30000cc); color:#fff; font-size:1.2rem; }
+
+  /* small controls row under board */
+  .mini-controls {
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+    flex-wrap:wrap;
+    justify-content:center;
   }
 
-  /* קישור חזרה */
-  #backHome {
-    margin-top: auto;
-    margin-bottom: 12px;
-    font-weight: 600;
-    font-size: 1rem;
-    text-decoration: none;
-    color: #ccc;
-    transition: color 0.3s ease;
-    user-select: none;
-  }
-  #backHome:hover {
-    color: #7b68ee;
-  }
+  a#backHome { margin-top:18px; color:#d6d6ff; text-decoration:none; font-weight:700; }
 
-  /* אנימציה כניסה */
-  @keyframes fadeIn {
-    0% {opacity: 0; transform: translateY(12px);}
-    100% {opacity: 1; transform: translateY(0);}
-  }
-
-  /* מדיה מובייל */
-  @media (max-width: 480px) {
-    h1 {
-      font-size: 1.8rem;
-    }
-    .controls {
-      flex-direction: column;
-      max-width: 320px;
-      gap: 14px;
-    }
-    select, button {
-      min-width: 100%;
-      font-size: 1.1rem;
-      padding: 14px 20px;
-    }
-    #board {
-      width: 90vw;
-      height: 90vw;
-    }
-    #status {
-      font-size: 1.2rem;
-      padding: 12px 16px;
-    }
+  /* responsive */
+  @media (max-width:520px) {
+    h1 { font-size:1.6rem; }
+    .controls { max-width:360px; gap:8px; }
+    #board { width:92vw; }
+    #status { width:92vw; font-size:1rem; }
   }
 </style>
 </head>
 <body>
 
-<h1>משחק שחמט מקצועי</h1>
+<h1>משחק שחמט — נגד שחקן או Stockfish</h1>
 
-<div class="controls" role="region" aria-label="בחירת מצב המשחק והגדרות">
-  <label for="modeSelect">מצב משחק:</label>
-  <select id="modeSelect" aria-describedby="modeDesc">
-    <option value="human">שחק נגד שחקן</option>
-    <option value="bot">שחק נגד בוט</option>
-  </select>
+<div class="controls" role="region" aria-label="בקרות המשחק">
+  <div class="control-group">
+    <label for="mode">מצב:</label>
+    <select id="mode" aria-label="בחר מצב">
+      <option value="human">שחק נגד שחקן</option>
+      <option value="stockfish">שחק נגד Stockfish</option>
+    </select>
+  </div>
 
-  <label for="difficultySelect" id="diffLabel" style="display:none;">רמת קושי:</label>
-  <select id="difficultySelect" style="display:none;" aria-describedby="diffDesc">
-    <option value="easy">קל</option>
-    <option value="medium">בינוני</option>
-    <option value="hard">קשה</option>
-  </select>
+  <div class="control-group" id="difficultyGroup" style="display:none;">
+    <label for="depth">קושי (עומק):</label>
+    <input id="depth" type="range" min="1" max="20" value="8" />
+    <span id="depthVal" style="min-width:36px; text-align:center; display:inline-block; font-weight:800;">8</span>
+  </div>
 
-  <button id="restartBtn" aria-label="התחל משחק חדש">התחל משחק חדש</button>
+  <div class="control-group">
+    <button id="restartBtn" class="primary">התחל חדש</button>
+    <button id="undoBtn" class="ghost">ביטול מהלך</button>
+    <button id="resignBtn" class="ghost">וויתר</button>
+  </div>
 </div>
 
-<div id="board"></div>
+<div id="board" aria-label="לוח שחמט"></div>
 
-<div id="status" role="status" aria-live="polite"></div>
+<div id="status" role="status" aria-live="polite" class="turn-white">טוען...</div>
 
-<a href="https://shalev1912.github.io/chat-gpt/home.html" id="backHome" role="link" aria-label="חזרה למסך הבית">← חזרה למסך הבית</a>
+<div class="mini-controls">
+  <button id="flipBtn" class="ghost">החלף צד</button>
+  <button id="shareFenBtn" class="ghost">העתק FEN</button>
+</div>
+
+<a id="backHome" href="https://shalev1912.github.io/chat-gpt/home.html">← חזרה למסך הבית</a>
 
 <script>
-  const modeSelect = document.getElementById('modeSelect');
-  const difficultySelect = document.getElementById('difficultySelect');
-  const diffLabel = document.getElementById('diffLabel');
-  const restartBtn = document.getElementById('restartBtn');
-  const statusEl = document.getElementById('status');
+/* ===========================================
+   Chess logic + Stockfish integration
+   =========================================== */
 
-  let board = null;
-  let game = new Chess();
+let board = null;
+let game = null;
+let engine = null;
+let engineReady = false;
+let expectingBestMove = false;
+let playerColor = 'w'; // color controlled by human (in stockfish mode, human plays white by default)
+let autoMoveTimeout = null;
 
-  let currentMode = 'human';
-  let botDifficulty = 'easy';
+// DOM
+const modeSelect = document.getElementById('mode');
+const depthRange = document.getElementById('depth');
+const depthVal = document.getElementById('depthVal');
+const difficultyGroup = document.getElementById('difficultyGroup');
+const statusEl = document.getElementById('status');
+const restartBtn = document.getElementById('restartBtn');
+const undoBtn = document.getElementById('undoBtn');
+const resignBtn = document.getElementById('resignBtn');
+const flipBtn = document.getElementById('flipBtn');
+const shareFenBtn = document.getElementById('shareFenBtn');
 
-  // הצגת הודעה ומחלקת סטטוס
-  function setStatus(message, className = '') {
-    statusEl.textContent = message;
-    statusEl.className = '';
-    if (className) statusEl.classList.add(className);
+depthRange.addEventListener('input', () => depthVal.textContent = depthRange.value);
+
+// set status with class
+function setStatus(text, cls='') {
+  statusEl.textContent = text;
+  statusEl.className = '';
+  if (cls) statusEl.classList.add(cls);
+}
+
+/* ----- Initialize engine (Stockfish) ----- */
+function createEngine() {
+  engineReady = false;
+  if (typeof STOCKFISH === 'function') {
+    // some stockfish builds expose STOCKFISH() factory which returns worker-like object
+    try {
+      engine = STOCKFISH();
+      engine.onmessage = onEngineMessage;
+      engine.postMessage('uci');
+      engine.postMessage('isready');
+      engineReady = true; // will flip to true after 'readyok' but mark available
+    } catch (e) {
+      console.warn('STOCKFISH() failed, trying Worker fallback', e);
+      engine = null;
+    }
   }
 
-  // עדכון מצב המשחק עם צבעים ואפקטים
-  function updateStatus() {
-    if (game.in_checkmate()) {
-      setStatus('מט! המשחק נגמר.', 'checkmate');
-    } else if (game.in_draw()) {
-      setStatus('תיקו!', 'draw');
-    } else {
-      let turn = game.turn() === 'w' ? 'לבן' : 'שחור';
-      if (game.in_check()) {
-        setStatus(`תור ${turn} - שח למלך!`, 'check');
-      } else {
-        setStatus(`תור ${turn}`, game.turn() === 'w' ? 'turn-white' : 'turn-black');
+  if (!engine) {
+    try {
+      // fallback: try to create a Worker (unpkg build may allow this)
+      engine = new Worker('https://unpkg.com/stockfish/stockfish.js');
+      engine.onmessage = onEngineMessage;
+      engine.postMessage('uci');
+      engine.postMessage('isready');
+    } catch (err) {
+      console.error('לא הצלחנו ליצור Stockfish worker:', err);
+      engine = null;
+    }
+  }
+}
+
+// engine message handler (works for both Worker and STOCKFISH())
+function onEngineMessage(event) {
+  const line = (typeof event === 'string' ? event : (event.data || '')).toString();
+  // console.log('engine:', line);
+  if (line.includes('readyok')) {
+    engineReady = true;
+    setStatus('Stockfish מוכן', 'turn-white');
+    return;
+  }
+  if (line.startsWith('bestmove')) {
+    // bestmove e2e4 ponder ...
+    const parts = line.split(' ');
+    if (parts.length >= 2) {
+      const mv = parts[1].trim();
+      if (mv && !game.game_over()) {
+        // perform the move
+        const from = mv.substring(0,2);
+        const to = mv.substring(2,4);
+        const promotion = mv.length > 4 ? mv[4] : 'q';
+        game.move({ from, to, promotion });
+        board.position(game.fen());
+        updateStatus();
       }
     }
+    expectingBestMove = false;
   }
+}
 
-  // התחלת הלוח עם אפשרות להזיז חתיכות
-  function onDragStart(source, piece, position, orientation) {
-    if (game.game_over()) return false;
+/* ----- interface engine helpers ----- */
+function engineSend(cmd) {
+  if (!engine) return;
+  // Worker expects postMessage, STOCKFISH() may expect postMessage as well
+  try {
+    engine.postMessage(cmd);
+  } catch (e) {
+    // Some builds require engine({cmd}) - handle common patterns:
+    try { engine(cmd); } catch (err) { console.warn('engineSend failed', err); }
+  }
+}
 
-    if (currentMode === 'bot') {
-      // שחקן שולט רק בלבן
-      if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
-          (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
-        return false;
-      }
+// ask engine to play from current game position with chosen depth
+function askEngineToPlay() {
+  if (!engine || !engineReady) {
+    console.warn('engine not ready');
+    return;
+  }
+  const fen = game.fen();
+  engineSend('position fen ' + fen);
+  const depth = parseInt(depthRange.value || '8', 10);
+  expectingBestMove = true;
+  // use go depth X
+  engineSend('go depth ' + depth);
+}
+
+/* ----- chessboard callbacks ----- */
+function onDragStart(source, piece, position, orientation) {
+  if (game.game_over()) return false;
+  // if playing vs engine, human may only move their color
+  if (modeSelect.value === 'stockfish') {
+    const humanColor = playerColor;
+    if ((humanColor === 'w' && piece.search(/^b/) !== -1) ||
+        (humanColor === 'b' && piece.search(/^w/) !== -1)) {
+      return false;
     }
-    // לא מאפשרים להזיז חתיכה שלא שייכת לתור
-    if (game.turn() === 'w' && piece.search(/^b/) !== -1) return false;
-    if (game.turn() === 'b' && piece.search(/^w/) !== -1) return false;
-
-    return true;
   }
+  // also ensure piece matches turn
+  if (game.turn() === 'w' && piece.search(/^b/) !== -1) return false;
+  if (game.turn() === 'b' && piece.search(/^w/) !== -1) return false;
+  return true;
+}
 
-  // מהלך שנעשה על ידי השחקן
-  function onDrop(source, target) {
-    let move = game.move({
-      from: source,
-      to: target,
-      promotion: 'q'
-    });
+function onDrop(source, target) {
+  // try move
+  const move = game.move({ from: source, to: target, promotion: 'q' });
+  if (move === null) return 'snapback';
 
-    if (move === null) return 'snapback';
+  board.position(game.fen());
+  updateStatus();
 
-    updateStatus();
-
-    if (currentMode === 'bot' && !game.game_over()) {
-      window.setTimeout(makeBotMove, 500);
-    }
+  // if vs engine and it's engine's turn, ask engine
+  if (modeSelect.value === 'stockfish' && !game.game_over()) {
+    // small delay for UX
+    clearTimeout(autoMoveTimeout);
+    autoMoveTimeout = setTimeout(() => {
+      askEngineToPlay();
+    }, 300);
   }
+}
 
-  function onSnapEnd() {
-    board.position(game.fen());
+function onSnapEnd() {
+  board.position(game.fen());
+}
+
+/* ----- UI logic ----- */
+function updateStatus() {
+  if (!game) return;
+  if (game.in_checkmate()) {
+    setStatus('מט! המשחק נגמר — מט.', 'checkmate');
+    return;
   }
-
-  // רמות קושי לבוט
-  function makeBotMove() {
-    if (game.game_over()) return;
-
-    let possibleMoves = game.moves();
-    if (possibleMoves.length === 0) return;
-
-    let move = null;
-
-    if (botDifficulty === 'easy') {
-      const randomIndex = Math.floor(Math.random() * possibleMoves.length);
-      move = possibleMoves[randomIndex];
-    } else if (botDifficulty === 'medium') {
-      // בוחרים מתוך 3 מהלכים אקראיים
-      const top3 = possibleMoves.slice(0, 3);
-      const randomIndex = Math.floor(Math.random() * top3.length);
-      move = top3[randomIndex];
-    } else {
-      // קשה - הערכה פשוטה לפי חומר
-      let bestMove = null;
-      let bestScore = -Infinity;
-      for (let m of possibleMoves) {
-        game.move(m);
-        let score = evaluateBoard(game);
-        game.undo();
-        if (score > bestScore) {
-          bestScore = score;
-          bestMove = m;
-        }
-      }
-      move = bestMove;
-    }
-
-    game.move(move);
-    board.position(game.fen());
-    updateStatus();
+  if (game.in_draw() || game.in_stalemate() || game.insufficient_material()) {
+    setStatus('תיקו!', 'turn-black');
+    return;
   }
-
-  // פונקציית הערכה בסיסית לפי חומר
-  function evaluateBoard(gameInstance) {
-    const values = { p:1, n:3, b:3, r:5, q:9, k:0 };
-    let score = 0;
-    let fen = gameInstance.fen();
-    for (let char of fen) {
-      if (char === ' ') break;
-      let lower = char.toLowerCase();
-      if (values[lower]) {
-        if (char === lower) score -= values[lower]; // שחורות
-        else score += values[lower]; // לבנות
-      }
-    }
-    return score;
+  const turn = game.turn() === 'w' ? 'לבן' : 'שחור';
+  if (game.in_check()) {
+    setStatus(`תור ${turn} — שח למלך!`, 'check');
+  } else {
+    setStatus(`תור ${turn}`, game.turn() === 'w' ? 'turn-white' : 'turn-black');
   }
+}
 
-  // התחלת לוח
-  function init() {
-    board = Chessboard('board', {
-      draggable: true,
-      position: 'start',
-      onDragStart: onDragStart,
-      onDrop: onDrop,
-      onSnapEnd: onSnapEnd,
-      pieceTheme: 'https://cdn.jsdelivr.net/npm/chessboardjs@1.0.0/img/chesspieces/wikipedia/{piece}.png',
-      responsive: true
-    });
-    updateStatus();
-  }
+/* ----- init board & game ----- */
+function initGame() {
+  game = new Chess();
 
-  // שינוי מצב משחק - הצגת רמת קושי רק בבוט
-  modeSelect.addEventListener('change', () => {
-    currentMode = modeSelect.value;
-    if (currentMode === 'bot') {
-      difficultySelect.style.display = 'inline-block';
-      diffLabel.style.display = 'inline-block';
-    } else {
-      difficultySelect.style.display = 'none';
-      diffLabel.style.display = 'none';
-    }
-    resetGame();
-  });
-
-  difficultySelect.addEventListener('change', () => {
-    botDifficulty = difficultySelect.value;
-  });
-
-  restartBtn.addEventListener('click', resetGame);
-
-  // איפוס משחק
-  function resetGame() {
-    game.reset();
-    board.start();
-    updateStatus();
-  }
-
-  window.onload = () => {
-    init();
+  const cfg = {
+    draggable: true,
+    position: 'start',
+    onDragStart: onDragStart,
+    onDrop: onDrop,
+    onSnapEnd: onSnapEnd,
+    pieceTheme: 'https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/img/chesspieces/wikipedia/{piece}.png'
   };
+
+  if (board) board.destroy(); // chessboard.js has destroy in some builds; else ignore
+  board = Chessboard('board', cfg);
+  updateStatus();
+}
+
+/* ----- controls handlers ----- */
+modeSelect.addEventListener('change', () => {
+  const val = modeSelect.value;
+  if (val === 'stockfish') {
+    difficultyGroup.style.display = 'flex';
+    playerColor = 'w'; // human plays white by default; you can change later
+    // make sure engine is ready
+    if (!engine) {
+      setStatus('טוען Stockfish...', '');
+      createEngine();
+      // isready will set engineReady and status
+    } else {
+      setStatus('Stockfish מוכן', 'turn-white');
+    }
+  } else {
+    difficultyGroup.style.display = 'none';
+    setStatus('מצב שחקן מול שחקן', 'turn-white');
+  }
+  resetGame();
+});
+
+restartBtn.addEventListener('click', () => {
+  resetGame();
+});
+
+undoBtn.addEventListener('click', () => {
+  if (!game) return;
+  // if vs engine, undo twice to revert engine move too (if possible)
+  if (modeSelect.value === 'stockfish') {
+    game.undo();
+    game.undo();
+  } else {
+    game.undo();
+  }
+  board.position(game.fen());
+  updateStatus();
+});
+
+resignBtn.addEventListener('click', () => {
+  if (!game || game.game_over()) return;
+  const turn = game.turn() === 'w' ? 'לבן' : 'שחור';
+  setStatus(`${turn} וויתר/ה — המשחק נגמר.`, 'turn-black');
+  // mark game over by moving to terminal fen? we just stop asking engine
+});
+
+flipBtn.addEventListener('click', () => {
+  board.flip();
+});
+
+shareFenBtn.addEventListener('click', async () => {
+  const fen = game.fen();
+  try {
+    await navigator.clipboard.writeText(fen);
+    setStatus('FEN הועתק ללוח', 'turn-white');
+  } catch (e) {
+    prompt('העתק FEN מהטקסט:', fen);
+  }
+});
+
+/* ----- reset/new game ----- */
+function resetGame() {
+  if (autoMoveTimeout) clearTimeout(autoMoveTimeout);
+  initGame();
+  if (modeSelect.value === 'stockfish') {
+    // ensure engine knows starting position
+    if (!engine) createEngine();
+    // small delay to let engine be ready
+    setTimeout(() => {
+      if (engineReady) {
+        setStatus('התחל משחק — Stockfish מוכן', 'turn-white');
+        // If engine should play black automatically, nothing to do.
+        // (We set human to white by default)
+      } else {
+        setStatus('טוען Stockfish...', '');
+      }
+    }, 200);
+  } else {
+    setStatus('התחל משחק — מצב שחקן נגד שחקן', 'turn-white');
+  }
+}
+
+/* ----- start everything ----- */
+window.addEventListener('load', () => {
+  initGame();
+  setStatus('מוכן! בחר מצב כדי להתחיל', 'turn-white');
+
+  // create engine now (in background). This doesn't hurt for human-vs-human mode.
+  createEngine();
+});
 </script>
 
 </body>

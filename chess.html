@@ -1,183 +1,554 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>משחק שחמט מקצועי נגד Stockfish</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
-
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>שחמט — ללא ספריות (עם AI פשוט)</title>
 <style>
-body {
-    font-family: 'Heebo', sans-serif;
-    background: linear-gradient(135deg, #1e1e2f, #2d4d61);
-    margin: 0; padding: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    color: white;
-    min-height: 100vh;
-}
-h1 { margin-bottom: 20px; font-weight: 700; font-size: 2rem; text-shadow: 1px 1px 3px rgba(0,0,0,0.4);}
-.controls { margin-bottom: 20px; display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
-select, button { font-size: 1rem; padding: 10px 14px; border-radius: 12px; border: none; cursor: pointer; font-weight: 700; }
-select { min-width: 150px; color:#222; }
-button { background: #6a5acd; color: white; transition: transform 0.2s, background-color 0.2s; }
-button:hover { background: #5548b6; transform: scale(1.05); }
-#difficultySelect { display: none; }
-#board { width: 480px; max-width: 90vw; margin-bottom: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.4); border-radius: 12px; }
-#status { font-weight: 700; min-height: 32px; font-size: 1.2rem; text-align: center; margin-bottom: 15px; padding: 5px 10px; background: rgba(255,255,255,0.1); border-radius: 8px; }
-@media (max-width: 520px) { #board { width: 95vw; } }
-a#backHome { margin-top: auto; color: #eee; text-decoration: none; font-weight: 700; font-size: 1rem; }
-a#backHome:hover { color: #b8b8ff; }
+  :root{
+    --square: 70px;
+    --light: #eeeed2;
+    --dark: #769656;
+    --hint: rgba(255, 215, 0, 0.45);
+    --sel: rgba(135, 206, 250, 0.55);
+    --bg1:#1e1e2f; --bg2:#2d4d61;
+  }
+  body{
+    margin:0; padding:24px;
+    font-family: system-ui, -apple-system, "Segoe UI", Heebo, Arial, sans-serif;
+    background: linear-gradient(135deg,var(--bg1),var(--bg2));
+    color:#fff; display:flex; flex-direction:column; align-items:center; min-height:100vh;
+  }
+  h1{ margin:0 0 12px; font-size:clamp(20px,3vw,28px); }
+  .toolbar{
+    display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:center; margin-bottom:12px;
+  }
+  select,button{
+    border:none; border-radius:12px; padding:10px 14px; font-weight:700; cursor:pointer; font-size:14px;
+  }
+  select{ color:#222; }
+  button{ background:#6a5acd; color:#fff; }
+  button:hover{ filter:brightness(1.05); transform:translateY(-1px); }
+  .wrap{ display:flex; gap:18px; flex-wrap:wrap; align-items:flex-start; justify-content:center; }
+  .board{
+    display:grid; grid-template-columns: repeat(8, var(--square));
+    grid-template-rows: repeat(8, var(--square));
+    border-radius:14px; overflow:hidden; box-shadow:0 12px 30px rgba(0,0,0,.35);
+  }
+  .sq{
+    width:var(--square); height:var(--square); display:flex; align-items:center; justify-content:center; font-size:calc(var(--square) * 0.68);
+    user-select:none; position:relative; transition:background .12s ease;
+  }
+  .light{ background:var(--light); color:#111; }
+  .dark{ background:var(--dark); }
+  .sq.sel::after{
+    content:""; position:absolute; inset:0; background:var(--sel);
+  }
+  .sq.hint::before{
+    content:""; position:absolute; width:18px; height:18px; border-radius:50%;
+    background:var(--hint); box-shadow:0 0 0 2px rgba(0,0,0,.15) inset;
+  }
+  .sq.capture.hint::before{
+    width: calc(var(--square) * 0.92); height: calc(var(--square) * 0.92); border-radius:10px;
+    background: radial-gradient(transparent 40%, var(--hint) 41%);
+  }
+  .side{
+    min-width:260px; max-width:320px; display:flex; flex-direction:column; gap:10px;
+  }
+  .panel{
+    background:rgba(255,255,255,0.08); border-radius:14px; padding:12px 14px; backdrop-filter: blur(2px);
+  }
+  .status{ font-weight:800; font-size:16px; min-height:28px; }
+  .moves{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space:pre-wrap; line-height:1.45; max-height:230px; overflow:auto; }
+  .home{
+    margin-top:auto; color:#eee; text-decoration:none; font-weight:800; padding:10px 14px; border-radius:12px;
+    border:1px solid rgba(255,255,255,.2);
+  }
+  .home:hover{ color:#b8b8ff; border-color:#b8b8ff; }
+  @media (max-width:520px){
+    :root{ --square: 46px; }
+    .side{ min-width:unset; width:100%; max-width:520px; }
+  }
 </style>
 </head>
 <body>
 
-<h1>♟ משחק שחמט מקצועי</h1>
+<h1>♟ משחק שחמט — ללא ספריות</h1>
 
-<div class="controls">
-  <select id="modeSelect">
-    <option value="human">שחק נגד שחקן</option>
-    <option value="stockfish">שחק נגד Stockfish</option>
+<div class="toolbar">
+  <select id="mode">
+    <option value="human">אדם נגד אדם</option>
+    <option value="ai" selected>שחק נגד מחשב (פשוט)</option>
   </select>
-  <select id="difficultySelect">
-    <option value="4">קל (עומק 4)</option>
-    <option value="8" selected>בינוני (עומק 8)</option>
-    <option value="12">קשה (עומק 12)</option>
+  <select id="aiSide">
+    <option value="b" selected>המחשב שחור</option>
+    <option value="w">המחשב לבן</option>
   </select>
-  <button id="restartBtn">התחל משחק חדש</button>
-  <button id="undoBtn">בטל מהלך</button>
-  <button id="resignBtn">וויתר</button>
+  <select id="aiLevel">
+    <option value="0">רנדומלי</option>
+    <option value="1" selected>חמדן (1 ply)</option>
+  </select>
+  <button id="new">משחק חדש</button>
+  <button id="undo">בטל מהלך</button>
 </div>
 
-<div id="board"></div>
-<div id="status">מוכן.</div>
-<a id="backHome" href="https://shalev1912.github.io/chat-gpt/home.html">← חזרה למסך הבית</a>
-
-<!-- טעינת ספריות בסדר הנכון -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.13.5/chess.min.js"></script>
-<script src="https://unpkg.com/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+<div class="wrap">
+  <div id="board" class="board" aria-label="לוח שחמט"></div>
+  <div class="side">
+    <div class="panel status" id="status">מוכן.</div>
+    <div class="panel">
+      <div style="font-weight:700; margin-bottom:6px;">רשומת מהלכים</div>
+      <div id="moves" class="moves"></div>
+    </div>
+    <a class="home" href="https://shalev1912.github.io/chat-gpt/home.html">← חזרה למסך הבית</a>
+  </div>
+</div>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-  // עכשיו Chess מוגדר גלובלית
-  const game = new Chess();
-  let engine=null, engineReady=false, waitingForEngineMove=false, resigned=false;
+/* =========================
+   ייצוג לוח וכלים (ללא ספריות)
+   — חוקים מלאים לכלים, מניעת השארת המלך תחת שח,
+   — קידום מלכה אוטומטי,
+   — ללא הצרחה וללא en passant (אפשר להוסיף בהמשך).
+========================= */
 
-  const modeSelect = document.getElementById('modeSelect');
-  const difficultySelect = document.getElementById('difficultySelect');
-  const restartBtn = document.getElementById('restartBtn');
-  const undoBtn = document.getElementById('undoBtn');
-  const resignBtn = document.getElementById('resignBtn');
-  const statusEl = document.getElementById('status');
+// יוניקוד לכלים
+const U = {
+  w:{K:'♔',Q:'♕',R:'♖',B:'♗',N:'♘',P:'♙'},
+  b:{K:'♚',Q:'♛',R:'♜',B:'♝',N:'♞',P:'♟'}
+};
 
-  function setStatus(text){ statusEl.textContent=text; }
+// ערכי חומר ל-AI
+const PV = {K:10000, Q:900, R:500, B:330, N:320, P:100};
 
-  function updateStatus(){
-    if(resigned){ setStatus('ויתרת על המשחק. לחץ "התחל משחק חדש" כדי לשחק שוב.'); return; }
-    if(game.in_checkmate()) setStatus('מט! המשחק נגמר.');
-    else if(game.in_draw()) setStatus('תיקו!');
-    else {
-      const turn = game.turn()==='w'?'לבן':'שחור';
-      if(game.in_check()) setStatus(`תור ${turn} - שח למלך!`);
-      else setStatus(`תור ${turn}`);
+// מצב המשחק
+let board, turn, history;
+
+// יצירת לוח התחלתי
+function startPosition(){
+  return [
+    ['bR','bN','bB','bQ','bK','bB','bN','bR'],
+    ['bP','bP','bP','bP','bP','bP','bP','bP'],
+    ['','','','','','','',''],
+    ['','','','','','','',''],
+    ['','','','','','','',''],
+    ['','','','','','','',''],
+    ['wP','wP','wP','wP','wP','wP','wP','wP'],
+    ['wR','wN','wB','wQ','wK','wB','wN','wR']
+  ];
+}
+
+// כלים ועזרים
+const inBounds = (r,c)=> r>=0 && r<8 && c>=0 && c<8;
+const colorOf = pc => pc ? pc[0] : null;
+const typeOf = pc => pc ? pc[1] : null;
+
+// מצא את המלך בצבע מסוים
+function findKing(bd, side){
+  for(let r=0;r<8;r++)
+    for(let c=0;c<8;c++)
+      if(bd[r][c]===side+'K') return [r,c];
+  return null;
+}
+
+// האם משבצת נתונה מאויימת על ידי צד
+function squareAttacked(bd, targetR, targetC, bySide){
+  // כיוון רגלים
+  const dir = bySide==='w' ? -1 : 1;
+  const pawnAttack = [[dir,-1],[dir,1]];
+  for(const [dr,dc] of pawnAttack){
+    const r=targetR+dr, c=targetC+dc;
+    if(inBounds(r,c) && bd[r][c]===bySide+'P') return true;
+  }
+  // פרש
+  const KN = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+  for(const [dr,dc] of KN){
+    const r=targetR+dr, c=targetC+dc;
+    if(inBounds(r,c) && bd[r][c]===bySide+'N') return true;
+  }
+  // רץ/מלכה אלכסונים
+  const Bdirs = [[-1,-1],[-1,1],[1,-1],[1,1]];
+  for(const [dr,dc] of Bdirs){
+    let r=targetR+dr, c=targetC+dc;
+    while(inBounds(r,c)){
+      const pc=bd[r][c];
+      if(pc){
+        if(colorOf(pc)===bySide && (typeOf(pc)==='B' || typeOf(pc)==='Q')) return true;
+        break;
+      }
+      r+=dr; c+=dc;
     }
   }
-
-  function createEngine(){
-    destroyEngine();
-    try{
-      engine = new Worker("https://rawcdn.githack.com/niklasf/stockfish.js/gh-pages/stockfish.js");
-      engineReady=false;
-      engine.onmessage=function(event){
-        const line=typeof event.data==='string'?event.data:'';
-        if(line==='uciok') engine.postMessage('isready');
-        else if(line==='readyok'){ engineReady=true; if(waitingForEngineMove) requestEngineMove(); }
-        else if(line.startsWith('bestmove')){
-          waitingForEngineMove=false;
-          const tokens=line.split(/\s+/);
-          const best=tokens[1];
-          if(best && best.length>=4){
-            const from=best.substring(0,2);
-            const to=best.substring(2,4);
-            const promo=best.length>=5?best[4]:undefined;
-            game.move({from,to,promotion: promo||'q'});
-            board.position(game.fen());
-            updateStatus();
-          }
-        }
-      };
-      engine.postMessage('uci');
-    } catch(e){ console.error(e); setStatus('אי אפשר להפעיל את Stockfish בדפדפן זה.'); }
-  }
-
-  function destroyEngine(){ if(engine){ try{ engine.terminate(); }catch(_){} } engine=null; engineReady=false; waitingForEngineMove=false; }
-
-  function requestEngineMove(){
-    if(!engine) createEngine();
-    if(!engineReady){ waitingForEngineMove=true; return; }
-    const fen=game.fen();
-    const depth=parseInt(difficultySelect.value,10)||8;
-    engine.postMessage('position fen '+fen);
-    engine.postMessage('go depth '+depth);
-    waitingForEngineMove=true;
-  }
-
-  function onDragStart(source,piece){
-    if(resigned||game.game_over()) return false;
-    if(modeSelect.value==='stockfish'){
-      if((game.turn()==='w'&&piece.startsWith('b'))||(game.turn()==='b'&&piece.startsWith('w'))) return false;
-      if(waitingForEngineMove) return false;
+  // צריח/מלכה קווים
+  const Rdirs = [[-1,0],[1,0],[0,-1],[0,1]];
+  for(const [dr,dc] of Rdirs){
+    let r=targetR+dr, c=targetC+dc;
+    while(inBounds(r,c)){
+      const pc=bd[r][c];
+      if(pc){
+        if(colorOf(pc)===bySide && (typeOf(pc)==='R' || typeOf(pc)==='Q')) return true;
+        break;
+      }
+      r+=dr; c+=dc;
     }
-    if((game.turn()==='w'&&piece.startsWith('b'))||(game.turn()==='b'&&piece.startsWith('w'))) return false;
-    return true;
   }
+  // מלך
+  for(let dr=-1; dr<=1; dr++)
+    for(let dc=-1; dc<=1; dc++){
+      if(!dr && !dc) continue;
+      const r=targetR+dr, c=targetC+dc;
+      if(inBounds(r,c) && bd[r][c]===bySide+'K') return true;
+    }
+  return false;
+}
 
-  function onDrop(source,target){
-    const move=game.move({from:source,to:target,promotion:'q'});
-    if(move===null) return 'snapback';
-    board.position(game.fen());
-    updateStatus();
-    if(modeSelect.value==='stockfish'&&!game.game_over()) setTimeout(requestEngineMove,200);
+// הפקת מהלכים פסאודו-חוקיים לכלי בודד
+function pseudoMoves(bd, r, c){
+  const pc = bd[r][c];
+  if(!pc) return [];
+  const side=colorOf(pc), type=typeOf(pc);
+  const res=[];
+  if(type==='P'){
+    const dir = side==='w' ? -1 : 1;
+    const startRow = side==='w' ? 6 : 1;
+    // צעד קדימה
+    if(inBounds(r+dir,c) && !bd[r+dir][c]){
+      res.push([r+dir,c]);
+      // צעד כפול מהשורה ההתחלתית אם פנוי
+      if(r===startRow && !bd[r+2*dir]?.[c]) res.push([r+2*dir,c]);
+    }
+    // לכידה באלכסון
+    for(const dc of [-1,1]){
+      const rr=r+dir, cc=c+dc;
+      if(inBounds(rr,cc) && bd[rr][cc] && colorOf(bd[rr][cc])!==side) res.push([rr,cc]);
+    }
+    // (אין en passant בגרסה זו)
+  } else if(type==='N'){
+    const KN = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+    for(const [dr,dc] of KN){
+      const rr=r+dr, cc=c+dc;
+      if(!inBounds(rr,cc)) continue;
+      const t=bd[rr][cc];
+      if(!t || colorOf(t)!==side) res.push([rr,cc]);
+    }
+  } else if(type==='B' || type==='R' || type==='Q'){
+    const D = [];
+    if(type!=='R') D.push([-1,-1],[-1,1],[1,-1],[1,1]);
+    if(type!=='B') D.push([-1,0],[1,0],[0,-1],[0,1]);
+    for(const [dr,dc] of D){
+      let rr=r+dr, cc=c+dc;
+      while(inBounds(rr,cc)){
+        const t=bd[rr][cc];
+        if(!t){ res.push([rr,cc]); }
+        else { if(colorOf(t)!==side) res.push([rr,cc]); break; }
+        rr+=dr; cc+=dc;
+      }
+    }
+  } else if(type==='K'){
+    for(let dr=-1; dr<=1; dr++)
+      for(let dc=-1; dc<=1; dc++){
+        if(!dr && !dc) continue;
+        const rr=r+dr, cc=c+dc;
+        if(!inBounds(rr,cc)) continue;
+        const t=bd[rr][cc];
+        if(!t || colorOf(t)!==side) res.push([rr,cc]);
+      }
+    // (אין הצרחה בגרסה זו)
   }
+  return res;
+}
 
-  function onSnapEnd(){ board.position(game.fen()); }
-
-  function resetGame(){ resigned=false; game.reset(); board.start(); updateStatus(); if(modeSelect.value==='stockfish') createEngine(); else destroyEngine(); }
-
-  function undoMove(){
-    if(resigned) return;
-    if(modeSelect.value==='stockfish'){ game.undo(); game.undo(); }
-    else{ game.undo(); }
-    board.position(game.fen());
-    updateStatus();
+// בדיקת חוקיות מלאה: לא להשאיר מלך בשח
+function legalMovesFrom(bd, r, c){
+  const side = colorOf(bd[r][c]);
+  const moves = [];
+  for(const [rr,cc] of pseudoMoves(bd, r, c)){
+    const copy = cloneBoard(bd);
+    // בצע
+    copy[rr][cc] = copy[r][c];
+    copy[r][c] = '';
+    // קידום אוטומטי
+    const t = typeOf(copy[rr][cc]);
+    if(t==='P' && (rr===0 || rr===7)){
+      copy[rr][cc] = side + 'Q';
+    }
+    // האם המלך של הצד תחת שח?
+    const kpos = findKing(copy, side);
+    if(!kpos) continue; // לא אמור לקרות
+    const inCheck = squareAttacked(copy, kpos[0], kpos[1], side==='w'?'b':'w');
+    if(!inCheck) moves.push([rr,cc]);
   }
+  return moves;
+}
 
-  function resignGame(){ if(game.game_over()) return; resigned=true; setStatus('ויתרת על המשחק. לחץ "התחל משחק חדש" כדי לשחק שוב.'); }
+function allLegalMoves(bd, side){
+  const all=[];
+  for(let r=0;r<8;r++)
+    for(let c=0;c<8;c++){
+      if(colorOf(bd[r][c])!==side) continue;
+      const ms = legalMovesFrom(bd, r, c);
+      for(const m of ms) all.push([[r,c], m]);
+    }
+  return all;
+}
 
-  const board = Chessboard('board',{
-    position:'start',
-    draggable:true,
-    onDragStart,
-    onDrop,
-    onSnapEnd,
-    pieceTheme: piece=>'https://cdn.jsdelivr.net/npm/chessboardjs@1.0.0/dist/img/chesspieces/wikipedia/'+piece+'.png'
-  });
+function cloneBoard(bd){ return bd.map(row=>row.slice()); }
 
-  modeSelect.addEventListener('change',()=>{
-    if(modeSelect.value==='stockfish'){ difficultySelect.style.display='inline-block'; createEngine(); }
-    else{ difficultySelect.style.display='none'; destroyEngine(); }
-    resetGame();
-  });
+// מינוח בסיסי — אלגברה
+const fileChar = c => String.fromCharCode('a'.charCodeAt(0)+c);
+const rankChar = r => String(8-r);
+function notation(from,to,pc,captured){
+  const t = typeOf(pc);
+  const pieceLetter = (t==='P') ? '' : t;
+  const cap = captured ? 'x' : '-';
+  return pieceLetter + fileChar(from[1]) + rankChar(from[0]) + cap + fileChar(to[1]) + rankChar(to[0]);
+}
 
-  restartBtn.addEventListener('click', resetGame);
-  undoBtn.addEventListener('click', undoMove);
-  resignBtn.addEventListener('click', resignGame);
+// =================== תצוגה ===================
+const boardEl = document.getElementById('board');
+const statusEl = document.getElementById('status');
+const movesEl = document.getElementById('moves');
+const modeSel = document.getElementById('mode');
+const aiSideSel = document.getElementById('aiSide');
+const aiLevelSel = document.getElementById('aiLevel');
+const btnNew = document.getElementById('new');
+const btnUndo = document.getElementById('undo');
 
+let selected = null;
+let legalHints = []; // רשימת יעדים חוקיים מהבחירה הנוכחית
+
+function reset(){
+  board = startPosition();
+  turn = 'w';
+  history = [];
+  selected = null;
+  legalHints = [];
+  draw();
   updateStatus();
+  maybeAIMove();
+}
+
+function draw(){
+  boardEl.innerHTML='';
+  for(let r=0;r<8;r++){
+    for(let c=0;c<8;c++){
+      const sq = document.createElement('div');
+      sq.className = 'sq ' + (((r+c)%2===0) ? 'light' : 'dark');
+      sq.dataset.r = r; sq.dataset.c = c;
+      const pc = board[r][c];
+      if(pc){
+        const side = pc[0], typ = pc[1];
+        sq.textContent = U[side][typ];
+      } else {
+        sq.textContent = '';
+      }
+      // הדגשות
+      if(selected && selected[0]===r && selected[1]===c) sq.classList.add('sel');
+      for(const [rr,cc,cap] of legalHints){
+        if(rr===r && cc===c){
+          sq.classList.add('hint');
+          if(cap) sq.classList.add('capture');
+        }
+      }
+      sq.addEventListener('click', onSquare);
+      boardEl.appendChild(sq);
+    }
+  }
+}
+
+function updateStatus(){
+  const side = (turn==='w')?'לבן':'שחור';
+  // בדיקת סוף משחק
+  const moves = allLegalMoves(board, turn);
+  const kpos = findKing(board, turn);
+  const inCheck = kpos ? squareAttacked(board, kpos[0], kpos[1], turn==='w'?'b':'w') : false;
+  if(moves.length===0){
+    if(inCheck) statusEl.textContent = `מט! ${side} תחת שח — ניצחון ל-${turn==='w'?'שחור':'לבן'}.`;
+    else statusEl.textContent = 'פט! תיקו.';
+    return;
+  }
+  statusEl.textContent = (inCheck?`שח! `:'') + `תור ${side}`;
+  // רשימת מהלכים
+  movesEl.textContent = history.map((h,i)=>((i%2===0)?(Math.floor(i/2)+1)+'. ':'')+h).join(' ');
+}
+
+function onSquare(e){
+  if(isAIsTurn()) return; // מניעת לחיצות בזמן תור מחשב
+  const r = +e.currentTarget.dataset.r;
+  const c = +e.currentTarget.dataset.c;
+  const pc = board[r][c];
+
+  // אם אין בחירה — בחר כלי מהצבע הנכון
+  if(!selected){
+    if(pc && colorOf(pc)===turn){
+      selected=[r,c];
+      legalHints = legalMovesFrom(board, r, c).map(([rr,cc])=>[rr,cc, !!board[rr][cc]]);
+      draw();
+    }
+    return;
+  }
+
+  // אם לוחצים על כלי מאותו צד — החלפת בחירה
+  if(pc && colorOf(pc)===turn){
+    selected=[r,c];
+    legalHints = legalMovesFrom(board, r, c).map(([rr,cc])=>[rr,cc, !!board[rr][cc]]);
+    draw();
+    return;
+  }
+
+  // ניסיון לבצע מסע
+  const isLegal = legalHints.some(([rr,cc])=> rr===r && cc===c);
+  if(!isLegal){ // ביטול בחירה
+    selected=null; legalHints=[]; draw();
+    return;
+  }
+
+  // בצע
+  const from = selected.slice();
+  const moving = board[from[0]][from[1]];
+  const captured = board[r][c] || '';
+  board[r][c] = moving;
+  board[from[0]][from[1]] = '';
+
+  // קידום אוטומטי לרגלי
+  if(typeOf(board[r][c])==='P' && (r===0 || r===7)) board[r][c] = colorOf(board[r][c])+'Q';
+
+  const san = notation(from,[r,c],moving,captured);
+  history.push(san);
+
+  selected=null; legalHints=[];
+  turn = (turn==='w')?'b':'w';
+  draw(); updateStatus();
+  maybeAIMove();
+}
+
+// =================== Undo ===================
+function undoOnce(){
+  // שמירה מינימלית: שחזור מהלכים מהיסטוריה לא אפשרי בלי מצב קודם.
+  // לכן נשמור ערמות מצבים לצורך Undo.
+}
+const stack = [];
+function pushState(){
+  stack.push({
+    board: board.map(r=>r.slice()),
+    turn,
+    history: history.slice()
+  });
+}
+function popState(){
+  const s = stack.pop();
+  if(!s) return;
+  board = s.board.map(r=>r.slice());
+  turn = s.turn;
+  history = s.history.slice();
+  selected=null; legalHints=[];
+  draw(); updateStatus();
+}
+
+// נעטוף פעולות שמשנות מצב
+function doUserMoveWrapper(fn){
+  pushState();
+  try{ fn(); }
+  catch(e){ console.error(e); popState(); }
+}
+
+// כפתורים
+btnNew.addEventListener('click', ()=>{ stack.length=0; reset(); });
+btnUndo.addEventListener('click', ()=>{ popState(); });
+
+// נעילת מצב לפני כל הזזה ידנית (ב-handler ביצוע המסע)
+const origOnSquare = onSquare;
+function onSquareWrapped(e){ doUserMoveWrapper(()=>origOnSquare(e)); }
+document.addEventListener('DOMContentLoaded', ()=>{
+  // יוחלף בציור הראשון
 });
+
+// =================== AI פשוט ===================
+function isAIsTurn(){
+  if(modeSel.value!=='ai') return false;
+  return turn === aiSideSel.value;
+}
+
+function evaluateMaterial(bd){
+  let score=0;
+  for(let r=0;r<8;r++)
+    for(let c=0;c<8;c++){
+      const pc = bd[r][c];
+      if(!pc) continue;
+      const s = colorOf(pc), t=typeOf(pc);
+      score += (s==='w'?1:-1) * (PV[t]||0);
+    }
+  return score;
+}
+
+function pickAIMove(){
+  const side = turn;
+  const moves = allLegalMoves(board, side);
+  if(moves.length===0) return null;
+  const level = +aiLevelSel.value;
+
+  if(level===0){
+    // רנדומלי
+    return moves[Math.floor(Math.random()*moves.length)];
+  }
+
+  // חמדן 1 ply: בוחר את המסע עם הערכת חומר מקסימלית אחרי המסע
+  let best = null, bestScore = (side==='w'?-Infinity:Infinity);
+  for(const [[r,c],[rr,cc]] of moves){
+    const copy = cloneBoard(board);
+    const mv = copy[r][c];
+    const cap = copy[rr][cc];
+    copy[rr][cc] = mv; copy[r][c]='';
+    // קידום
+    if(typeOf(copy[rr][cc])==='P' && (rr===0 || rr===7)) copy[rr][cc] = side+'Q';
+    const sc = evaluateMaterial(copy);
+    if(side==='w'){
+      if(sc>bestScore){ bestScore=sc; best=[[r,c],[rr,cc]]; }
+      // העדף לכידה בשוויון
+      else if(sc===bestScore && cap && !best) best=[[r,c],[rr,cc]];
+    } else {
+      if(sc<bestScore){ bestScore=sc; best=[[r,c],[rr,cc]]; }
+      else if(sc===bestScore && cap && !best) best=[[r,c],[rr,cc]];
+    }
+  }
+  return best || moves[0];
+}
+
+function maybeAIMove(){
+  if(!isAIsTurn()) return;
+  // שיהוי קטן לחוויה
+  setTimeout(()=>{
+    const mv = pickAIMove();
+    if(!mv) { updateStatus(); return; }
+
+    pushState(); // אפשרות Undo למסע המחשב
+
+    const [[r,c],[rr,cc]] = mv;
+    const moving = board[r][c];
+    const captured = board[rr][cc] || '';
+    board[rr][cc]=moving; board[r][c]='';
+    if(typeOf(board[rr][cc])==='P' && (rr===0 || rr===7)) board[rr][cc]=colorOf(board[rr][cc])+'Q';
+
+    const san = notation([r,c],[rr,cc],moving,captured);
+    history.push(san);
+
+    turn = (turn==='w')?'b':'w';
+    draw(); updateStatus();
+  }, 220);
+}
+
+// =================== אתחול ===================
+function wireSquaresHandlers(){
+  // לאחר draw(), רושמים מאזינים שמפנים ל-onSquareWrapped
+  document.querySelectorAll('.sq').forEach(sq=>{
+    sq.addEventListener('click', onSquareWrapped);
+  });
+}
+
+const _draw = draw;
+draw = function(){ _draw(); wireSquaresHandlers(); };
+
+reset();
 </script>
 </body>
 </html>

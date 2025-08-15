@@ -88,7 +88,7 @@
     /* content grid */
     .games {
       display:grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap:18px;
     }
 
@@ -186,7 +186,7 @@
         </div>
         <div>
           <h1>מרכז המשחקים</h1>
-          <p class="subtitle">קישור מהיר למשחקים — קליקים, טריוויה, סודוקו ושחמט • עיצוב נקי ורספונסיבי</p>
+          <p class="subtitle">קישור מהיר למשחקים — קליקים, טריוויה, סודוקו, שחמט וגיטרה • עיצוב נקי ורספונסיבי</p>
         </div>
       </div>
 
@@ -273,6 +273,28 @@
         <div class="meta">
           <h3>משחק השחמט</h3>
           <p>שחק שחמט עם עיצוב נקי ומאתגר!</p>
+        </div>
+        <div>
+          <div class="play">שחק ▶</div>
+        </div>
+      </a>
+
+      <!-- Guitar Master Card -->
+      <a class="card" href="music/guitar-master.html" role="link" aria-label="פתח גיטרה מאסטר">
+        <div class="thumb" aria-hidden="true">
+          <!-- guitar SVG icon -->
+          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" fill="none" stroke="white" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+            <path d="M12 40c0 0 8-4 20-4s20 4 20 4" />
+            <path d="M12 40v8c0 2 2 4 4 4h32c2 0 4-2 4-4v-8" />
+            <circle cx="32" cy="24" r="8" fill="rgba(255,255,255,0.06)"/>
+            <path d="M28 20h8v8h-8z" fill="white" opacity="0.9"/>
+            <path d="M16 32h32" stroke="white" stroke-width="1.5"/>
+            <path d="M16 36h32" stroke="white" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <div class="meta">
+          <h3>גיטרה מאסטר</h3>
+          <p>אקורדים ושירים לגיטרה עם יוטיוב!</p>
         </div>
         <div>
           <div class="play">שחק ▶</div>

@@ -47,3 +47,18 @@ button[disabled] {
 	opacity: 0.5;
 	cursor: not-allowed;
 }
+.mobile-controls {
+	display: none;
+	gap: 12px;
+	margin-top: 8px;
+}
+.mobile-controls .big {
+	font-size: 18px;
+	padding: 14px 18px;
+	min-width: 120px;
+}
+@media (hover: none) and (pointer: coarse) {
+	.mobile-controls {
+		display: flex;
+	}
+}

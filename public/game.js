@@ -7,6 +7,8 @@
 	const speedEl = document.getElementById('speed');
 	const distanceEl = document.getElementById('distance');
 	const restartBtn = document.getElementById('restart');
+	const btnUp = document.getElementById('btnUp');
+	const btnDown = document.getElementById('btnDown');
 
 	let laneIndex = null; // 0 or 1 assigned by server
 	let latestState = null;
@@ -17,6 +19,40 @@
 		restartBtn.disabled = true;
 		socket.emit('requestRestart');
 	});
+
+	if (btnUp) {
+		btnUp.addEventListener('click', () => {
+			if (!isGameRunning) return;
+			socket.emit('input', { type: 'move', direction: 'up' });
+		});
+	}
+	if (btnDown) {
+		btnDown.addEventListener('click', () => {
+			if (!isGameRunning) return;
+			socket.emit('input', { type: 'move', direction: 'down' });
+		});
+	}
+
+	let touchStartY = null;
+	canvas.addEventListener('touchstart', (e) => {
+		if (!isGameRunning) return;
+		if (e.touches && e.touches.length > 0) {
+			touchStartY = e.touches[0].clientY;
+		}
+	}, { passive: true });
+	canvas.addEventListener('touchend', (e) => {
+		if (!isGameRunning) return;
+		if (touchStartY == null) return;
+		const t = e.changedTouches && e.changedTouches[0] ? e.changedTouches[0] : (e.touches && e.touches[0] ? e.touches[0] : null);
+		if (!t) return;
+		const dy = t.clientY - touchStartY;
+		const THRESHOLD = 25;
+		if (Math.abs(dy) >= THRESHOLD) {
+			const dir = dy < 0 ? 'up' : 'down';
+			socket.emit('input', { type: 'move', direction: dir });
+		}
+		touchStartY = null;
+	}, { passive: true });
 
 	document.addEventListener('keydown', (e) => {
 		if (!isGameRunning) return;

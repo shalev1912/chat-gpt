@@ -1,0 +1,20 @@
+{
+  "name": "github-updater",
+  "version": "1.0.0",
+  "description": "GitHub Auto Updater Server",
+  "main": "github-updater-server.js",
+  "scripts": {
+    "start": "node github-updater-server.js",
+    "dev": "node github-updater-server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  },
+  "keywords": [
+    "github",
+    "updater",
+    "auto"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}

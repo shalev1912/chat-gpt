@@ -334,7 +334,7 @@ async function startServer() {
         
         app.listen(PORT, () => {
             console.log(`🚀 GitHub Updater Server פועל על פורט ${PORT}`);
-            console.log(`🌐 פתח את הדפדפן בכתובת: http://localhost:${PORT}/github-auto-updater.html`);
+            console.log(`🌐 פתח את הדפדפן בכתובת: http://localhost:3001/github-auto-updater.html`);
             console.log(`📁 נתיב הפרויקט: ${PROJECT_PATH}`);
             console.log(`⏰ זמן הפעלה: ${new Date().toLocaleString('he-IL')}`);
             

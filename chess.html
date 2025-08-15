@@ -10,17 +10,19 @@
 <style>
   body {
     font-family: 'Heebo', sans-serif;
-    background: linear-gradient(135deg, #2c3e50, #4ca1af);
+    background: linear-gradient(135deg, #1f1c2c, #928dab);
     margin: 0; padding: 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
     color: white;
+    min-height: 100vh;
   }
   h1 {
     margin-bottom: 20px;
     font-weight: 700;
     font-size: 2rem;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.3);
   }
   .controls {
     margin-bottom: 20px;
@@ -28,6 +30,11 @@
     gap: 12px;
     flex-wrap: wrap;
     justify-content: center;
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
   }
   select, button {
     font-size: 1rem;
@@ -36,21 +43,27 @@
     border: none;
     cursor: pointer;
     font-weight: 700;
+    transition: transform 0.2s ease, background 0.2s ease;
   }
   select { min-width: 150px; color:#222; }
   button {
-    background: #6a5acd;
+    background: linear-gradient(135deg, #6a5acd, #7b68ee);
     color: white;
-    transition: background-color 0.2s;
   }
-  button:hover { background: #5548b6; }
+  button:hover {
+    transform: scale(1.05);
+    background: linear-gradient(135deg, #7b68ee, #6a5acd);
+  }
   #difficultySelect { display: none; }
   #board {
     width: 480px;
     max-width: 90vw;
     margin-bottom: 15px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-    background: #eee;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(12px);
   }
   #status {
     font-weight: 700;
@@ -58,6 +71,7 @@
     font-size: 1.2rem;
     text-align: center;
     margin-bottom: 15px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
   }
   @media (max-width: 520px) { #board { width: 95vw; } }
   a#backHome {
@@ -66,6 +80,7 @@
     text-decoration: none;
     font-weight: 700;
     font-size: 1rem;
+    transition: color 0.2s ease;
   }
   a#backHome:hover { color: #b8b8ff; }
 </style>
@@ -74,15 +89,16 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chessboardjs@1.0.0/dist/chessboard.min.css" />
 <script src="https://cdn.jsdelivr.net/npm/chessboardjs@1.0.0/dist/chessboard.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chess.js@1.0.0/chess.min.js"></script>
+
 <!-- Stockfish כ-Worker מה-CDN -->
-<!-- עובד כ-Worker חיצוני: -->
 <script>
-  const STOCKFISH_URL = "https://cdn.jsdelivr.net/npm/stockfish@16/stockfish.js";
+  // גרסה מותאמת ל-WebAssembly שתומכת ב-Worker
+  const STOCKFISH_URL = "https://cdn.jsdelivr.net/npm/stockfish@16.0.0/src/stockfish.wasm.js";
 </script>
 </head>
 <body>
 
-<h1>משחק שחמט מקצועי</h1>
+<h1>♟ משחק שחמט מקצועי</h1>
 
 <div class="controls" role="region" aria-label="בחירת מצב ורמת קושי">
   <select id="modeSelect" aria-label="בחר מצב משחק">
@@ -121,6 +137,7 @@
   const undoBtn = document.getElementById('undoBtn');
   const resignBtn = document.getElementById('resignBtn');
   const statusEl = document.getElementById('status');
+  const boardEl = document.getElementById('board');
 
   function setStatus(text) { statusEl.textContent = text; }
 
@@ -140,7 +157,6 @@
     }
   }
 
-  // יצירת המנוע כ-Worker חיצוני
   function createEngine() {
     destroyEngine();
     try {
@@ -149,20 +165,17 @@
 
       engine.onmessage = function (event) {
         const line = (typeof event.data === 'string') ? event.data : '';
-        // console.debug('engine:', line);
 
         if (line === 'uciok') {
           engine.postMessage('isready');
         } else if (line === 'readyok') {
           engineReady = true;
           setStatus('Stockfish מוכן');
-          // אפשר להגדיר אופציות כאן אם רוצים (Skill Level וכו')
-          // engine.postMessage('setoption name Skill Level value 5');
           if (waitingForEngineMove) requestEngineMove();
         } else if (line.startsWith('bestmove')) {
           waitingForEngineMove = false;
           const tokens = line.split(/\s+/);
-          const best = tokens[1]; // למשל: e2e4 או e7e8q
+          const best = tokens[1];
           if (best && best.length >= 4) {
             const from = best.substring(0,2);
             const to = best.substring(2,4);
@@ -181,7 +194,8 @@
       engine.postMessage('uci');
     } catch (e) {
       console.error(e);
-      setStatus('אי אפשר להפעיל את Stockfish בדפדפן זה.');
+      setStatus('⚠️ לא ניתן להפעיל את Stockfish בדפדפן זה. נסה דפדפן אחר.');
+      boardEl.innerHTML = '<p style="color:white;text-align:center;">שגיאה בטעינת הלוח</p>';
     }
   }
 
@@ -209,18 +223,13 @@
 
   function onDragStart (source, piece) {
     if (resigned || game.game_over()) return false;
-
-    // במצב מנוע – לא לאפשר לגרור את כלי היריב
     if (modeSelect.value === 'stockfish') {
       if ((game.turn() === 'w' && piece.startsWith('b')) ||
           (game.turn() === 'b' && piece.startsWith('w'))) return false;
-      // לחכות לתור המנוע
       if (waitingForEngineMove) return false;
     }
-    // אם זה לא התור של הצבע של הכלי
     if (game.turn() === 'w' && piece.startsWith('b')) return false;
     if (game.turn() === 'b' && piece.startsWith('w')) return false;
-
     return true;
   }
 
@@ -248,8 +257,6 @@
 
     if (modeSelect.value === 'stockfish') {
       createEngine();
-      // אם הלוח מתחיל מלבן, המנוע ישחק רק אחרי הלבן
-      // אם תרצה שהמנוע יפתח, אפשר לקרוא כאן ל-requestEngineMove();
     } else {
       destroyEngine();
     }
@@ -258,7 +265,6 @@
   function undoMove() {
     if (resigned) return;
     if (modeSelect.value === 'stockfish') {
-      // לבטל את שני החצאים (שחקן + מנוע), אם אפשר
       game.undo();
       game.undo();
     } else {
@@ -274,7 +280,6 @@
     setStatus('ויתרת על המשחק. לחץ "התחל משחק חדש" כדי לשחק שוב.');
   }
 
-  // יצירת הלוח
   board = Chessboard('board', {
     position: 'start',
     draggable: true,
@@ -286,7 +291,6 @@
     }
   });
 
-  // חיבור אירועים
   modeSelect.addEventListener('change', () => {
     if (modeSelect.value === 'stockfish') {
       difficultySelect.style.display = 'inline-block';
@@ -299,7 +303,6 @@
   });
 
   difficultySelect.addEventListener('change', () => {
-    // שינוי רמה ישפיע על החיפושים הבאים
     setStatus('רמת הקושי עודכנה.'); 
   });
 
@@ -307,10 +310,8 @@
   undoBtn.addEventListener('click', undoMove);
   resignBtn.addEventListener('click', resignGame);
 
-  // התחלה נקייה
-  difficultySelect.style.display = 'none'; // ברירת מחדל: אדם מול אדם
+  difficultySelect.style.display = 'none';
   updateStatus();
-
 })();
 </script>
 </body>

@@ -4,6 +4,7 @@
   "description": "chat gpt\r https://shalev1912.github.io/chat-gpt/home.html",
   "main": "index.js",
   "scripts": {
+    "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -18,6 +19,7 @@
   },
   "homepage": "https://github.com/shalev1912/chat-gpt#readme",
   "dependencies": {
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "socket.io": "^4.8.1"
   }
 }

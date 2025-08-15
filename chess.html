@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>שחמט — ללא ספריות (עם AI פשוט)</title>
+<title>שחמט — ללא ספריות (AI + חנות סקינים)</title>
 <style>
   :root{
     --square: 70px;
@@ -12,6 +12,7 @@
     --hint: rgba(255, 215, 0, 0.45);
     --sel: rgba(135, 206, 250, 0.55);
     --bg1:#1e1e2f; --bg2:#2d4d61;
+    --pieceW:#111; --pieceB:#111;
   }
   body{
     margin:0; padding:24px;
@@ -36,11 +37,11 @@
     border-radius:14px; overflow:hidden; box-shadow:0 12px 30px rgba(0,0,0,.35);
   }
   .sq{
-    width:var(--square); height:var(--square); display:flex; align-items:center; justify-content:center; font-size:calc(var(--square) * 0.68);
+    width:var(--square); height:var(--square); display:flex; align-items:center; justify-content:center;
     user-select:none; position:relative; transition:background .12s ease;
   }
   .light{ background:var(--light); color:#111; }
-  .dark{ background:var(--dark); }
+  .dark{ background:var(--dark); color:#111; }
   .sq.sel::after{
     content:""; position:absolute; inset:0; background:var(--sel);
   }
@@ -52,20 +53,74 @@
     width: calc(var(--square) * 0.92); height: calc(var(--square) * 0.92); border-radius:10px;
     background: radial-gradient(transparent 40%, var(--hint) 41%);
   }
-  .side{
-    min-width:260px; max-width:320px; display:flex; flex-direction:column; gap:10px;
+
+  /* תצוגת כלים (סקינים) */
+  .piece{ font-size:calc(var(--square) * 0.68); line-height:1; }
+  .skin-unicode .piece{ color: var(--pieceColor, #111); text-shadow: 0 1px 0 rgba(255,255,255,.3); }
+  .skin-letters .piece{
+    width: calc(var(--square) * 0.76); height: calc(var(--square) * 0.76);
+    border-radius: 50%; display:flex; align-items:center; justify-content:center;
+    font-weight:900; font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: calc(var(--square) * 0.40);
+    box-shadow: inset 0 -3px 8px rgba(0,0,0,.35), 0 2px 6px rgba(0,0,0,.25);
+    color:#fff;
   }
-  .panel{
-    background:rgba(255,255,255,0.08); border-radius:14px; padding:12px 14px; backdrop-filter: blur(2px);
+  .skin-letters .piece.w{ background: linear-gradient(#6db3f2,#1e69de); }
+  .skin-letters .piece.b{ background: linear-gradient(#ff9966,#ff5e62); }
+  .skin-flat .piece{
+    width: calc(var(--square) * 0.70); height: calc(var(--square) * 0.70);
+    border-radius: 14px; display:flex; align-items:center; justify-content:center;
+    font-weight:900; font-size: calc(var(--square) * 0.42);
+    background: rgba(0,0,0,.06);
+    color:#111;
+    border: 2px solid rgba(0,0,0,.15);
+    backdrop-filter: blur(2px);
   }
+  .skin-flat .piece.w{ background: rgba(255,255,255,.65); }
+  .skin-flat .piece.b{ background: rgba(0,0,0,.18); }
+
+  .side{ min-width:280px; max-width:340px; display:flex; flex-direction:column; gap:10px; }
+  .panel{ background:rgba(255,255,255,0.08); border-radius:14px; padding:12px 14px; backdrop-filter: blur(2px); }
   .status{ font-weight:800; font-size:16px; min-height:28px; }
   .moves{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space:pre-wrap; line-height:1.45; max-height:230px; overflow:auto; }
-  .home{
+
+  .shop-btn{ background:#22c55e; }
+  .row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .coins{ margin-left:auto; background:rgba(255,255,255,.15); border-radius:999px; padding:6px 10px; font-weight:800; display:flex; gap:6px; align-items:center; }
+  .coins i{ filter: drop-shadow(0 1px 2px rgba(0,0,0,.3)); }
+
+  /* מודאל חנות */
+  .modal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; backdrop-filter: blur(2px); }
+  .modal.open{ display:flex; }
+  .modal-bg{ position:absolute; inset:0; background: rgba(0,0,0,.45); }
+  .modal-card{
+    position:relative; z-index:2; width:min(920px, 95vw); max-height:85vh; overflow:auto;
+    background:rgba(30,30,47,.95); border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:16px;
+    box-shadow: 0 20px 50px rgba(0,0,0,.5);
+  }
+  .shop-grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px; }
+  .shop-item{
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:10px;
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .shop-item h4{ margin:0; font-size:14px; }
+  .preview{
+    height:120px; border-radius:12px; display:grid; grid-template-columns: repeat(4,1fr); grid-template-rows: repeat(2,1fr);
+    overflow:hidden; border:1px solid rgba(255,255,255,.08);
+  }
+  .preview .cell{ display:flex; align-items:center; justify-content:center; font-size:28px; }
+  .tag{ font-size:12px; opacity:.8; }
+  .row-between{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .btn-small{ font-size:12px; padding:6px 10px; border-radius:10px; background:#6a5acd; border:none; color:#fff; font-weight:800; cursor:pointer; }
+  .btn-small.green{ background:#22c55e; }
+  .locked{ opacity:.6; position:relative; }
+  .locked::after{ content:"🔒"; position:absolute; top:8px; right:8px; }
+  a.home{
     margin-top:auto; color:#eee; text-decoration:none; font-weight:800; padding:10px 14px; border-radius:12px;
     border:1px solid rgba(255,255,255,.2);
   }
-  .home:hover{ color:#b8b8ff; border-color:#b8b8ff; }
-  @media (max-width:520px){
+  a.home:hover{ color:#b8b8ff; border-color:#b8b8ff; }
+  @media (max-width:540px){
     :root{ --square: 46px; }
     .side{ min-width:unset; width:100%; max-width:520px; }
   }
@@ -73,23 +128,27 @@
 </head>
 <body>
 
-<h1>♟ משחק שחמט — ללא ספריות</h1>
+<h1>♟ שחמט — AI + חנות סקינים (ללא ספריות)</h1>
 
 <div class="toolbar">
   <select id="mode">
     <option value="human">אדם נגד אדם</option>
-    <option value="ai" selected>שחק נגד מחשב (פשוט)</option>
+    <option value="ai" selected>שחק נגד מחשב</option>
   </select>
   <select id="aiSide">
     <option value="b" selected>המחשב שחור</option>
     <option value="w">המחשב לבן</option>
   </select>
   <select id="aiLevel">
-    <option value="0">רנדומלי</option>
-    <option value="1" selected>חמדן (1 ply)</option>
+    <option value="0">AI: רנדומלי</option>
+    <option value="1" selected>AI: חמדן (1 ply)</option>
+    <option value="2">AI: מינימקס (2 ply)</option>
+    <option value="3">AI: מינימקס (3 ply)</option>
   </select>
   <button id="new">משחק חדש</button>
   <button id="undo">בטל מהלך</button>
+  <button id="shop" class="shop-btn">חנות סקינים</button>
+  <div class="coins" id="coinBox"><i>🪙</i><span id="coins">300</span></div>
 </div>
 
 <div class="wrap">
@@ -104,27 +163,36 @@
   </div>
 </div>
 
-<script>
-/* =========================
-   ייצוג לוח וכלים (ללא ספריות)
-   — חוקים מלאים לכלים, מניעת השארת המלך תחת שח,
-   — קידום מלכה אוטומטי,
-   — ללא הצרחה וללא en passant (אפשר להוסיף בהמשך).
-========================= */
+<!-- חנות (מודאל) -->
+<div class="modal" id="shopModal" aria-hidden="true">
+  <div class="modal-bg" id="shopClose"></div>
+  <div class="modal-card">
+    <div class="row" style="justify-content:space-between; margin-bottom:8px;">
+      <h3 style="margin:0;">🛍️ חנות סקינים</h3>
+      <button class="btn-small" id="shopX">סגור</button>
+    </div>
 
-// יוניקוד לכלים
+    <h4 style="margin:10px 0 6px;">🎨 סקינים ללוח</h4>
+    <div id="boardSkins" class="shop-grid"></div>
+
+    <h4 style="margin:16px 0 6px;">♟️ סקינים לכלים</h4>
+    <div id="pieceSkins" class="shop-grid"></div>
+  </div>
+</div>
+
+<script>
+/* ========= בסיס שחמט (ללא ספריות) ========= */
 const U = {
   w:{K:'♔',Q:'♕',R:'♖',B:'♗',N:'♘',P:'♙'},
   b:{K:'♚',Q:'♛',R:'♜',B:'♝',N:'♞',P:'♟'}
 };
-
-// ערכי חומר ל-AI
 const PV = {K:10000, Q:900, R:500, B:330, N:320, P:100};
 
-// מצב המשחק
 let board, turn, history;
+const inBounds = (r,c)=> r>=0 && r<8 && c>=0 && c<8;
+const colorOf = pc => pc ? pc[0] : null;
+const typeOf = pc => pc ? pc[1] : null;
 
-// יצירת לוח התחלתי
 function startPosition(){
   return [
     ['bR','bN','bB','bQ','bK','bB','bN','bR'],
@@ -137,174 +205,101 @@ function startPosition(){
     ['wR','wN','wB','wQ','wK','wB','wN','wR']
   ];
 }
-
-// כלים ועזרים
-const inBounds = (r,c)=> r>=0 && r<8 && c>=0 && c<8;
-const colorOf = pc => pc ? pc[0] : null;
-const typeOf = pc => pc ? pc[1] : null;
-
-// מצא את המלך בצבע מסוים
 function findKing(bd, side){
-  for(let r=0;r<8;r++)
-    for(let c=0;c<8;c++)
-      if(bd[r][c]===side+'K') return [r,c];
+  for(let r=0;r<8;r++) for(let c=0;c<8;c++)
+    if(bd[r][c]===side+'K') return [r,c];
   return null;
 }
-
-// האם משבצת נתונה מאויימת על ידי צד
 function squareAttacked(bd, targetR, targetC, bySide){
-  // כיוון רגלים
   const dir = bySide==='w' ? -1 : 1;
-  const pawnAttack = [[dir,-1],[dir,1]];
-  for(const [dr,dc] of pawnAttack){
-    const r=targetR+dr, c=targetC+dc;
+  for(const [dr,dc] of [[dir,-1],[dir,1]]){
+    const r=targetR+dr,c=targetC+dc;
     if(inBounds(r,c) && bd[r][c]===bySide+'P') return true;
   }
-  // פרש
-  const KN = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
-  for(const [dr,dc] of KN){
-    const r=targetR+dr, c=targetC+dc;
+  for(const [dr,dc] of [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]]){
+    const r=targetR+dr,c=targetC+dc;
     if(inBounds(r,c) && bd[r][c]===bySide+'N') return true;
   }
-  // רץ/מלכה אלכסונים
-  const Bdirs = [[-1,-1],[-1,1],[1,-1],[1,1]];
-  for(const [dr,dc] of Bdirs){
-    let r=targetR+dr, c=targetC+dc;
+  for(const [dr,dc] of [[-1,-1],[-1,1],[1,-1],[1,1]]){
+    let r=targetR+dr,c=targetC+dc;
     while(inBounds(r,c)){
       const pc=bd[r][c];
-      if(pc){
-        if(colorOf(pc)===bySide && (typeOf(pc)==='B' || typeOf(pc)==='Q')) return true;
-        break;
-      }
+      if(pc){ if(colorOf(pc)===bySide && (typeOf(pc)==='B'||typeOf(pc)==='Q')) return true; break; }
       r+=dr; c+=dc;
     }
   }
-  // צריח/מלכה קווים
-  const Rdirs = [[-1,0],[1,0],[0,-1],[0,1]];
-  for(const [dr,dc] of Rdirs){
-    let r=targetR+dr, c=targetC+dc;
+  for(const [dr,dc] of [[-1,0],[1,0],[0,-1],[0,1]]){
+    let r=targetR+dr,c=targetC+dc;
     while(inBounds(r,c)){
       const pc=bd[r][c];
-      if(pc){
-        if(colorOf(pc)===bySide && (typeOf(pc)==='R' || typeOf(pc)==='Q')) return true;
-        break;
-      }
+      if(pc){ if(colorOf(pc)===bySide && (typeOf(pc)==='R'||typeOf(pc)==='Q')) return true; break; }
       r+=dr; c+=dc;
     }
   }
-  // מלך
-  for(let dr=-1; dr<=1; dr++)
-    for(let dc=-1; dc<=1; dc++){
-      if(!dr && !dc) continue;
-      const r=targetR+dr, c=targetC+dc;
-      if(inBounds(r,c) && bd[r][c]===bySide+'K') return true;
-    }
+  for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
+    if(!dr && !dc) continue;
+    const r=targetR+dr,c=targetC+dc;
+    if(inBounds(r,c) && bd[r][c]===bySide+'K') return true;
+  }
   return false;
 }
-
-// הפקת מהלכים פסאודו-חוקיים לכלי בודד
 function pseudoMoves(bd, r, c){
-  const pc = bd[r][c];
-  if(!pc) return [];
-  const side=colorOf(pc), type=typeOf(pc);
-  const res=[];
+  const pc = bd[r][c]; if(!pc) return [];
+  const side=colorOf(pc), type=typeOf(pc), res=[];
   if(type==='P'){
     const dir = side==='w' ? -1 : 1;
     const startRow = side==='w' ? 6 : 1;
-    // צעד קדימה
     if(inBounds(r+dir,c) && !bd[r+dir][c]){
       res.push([r+dir,c]);
-      // צעד כפול מהשורה ההתחלתית אם פנוי
       if(r===startRow && !bd[r+2*dir]?.[c]) res.push([r+2*dir,c]);
     }
-    // לכידה באלכסון
     for(const dc of [-1,1]){
       const rr=r+dir, cc=c+dc;
       if(inBounds(rr,cc) && bd[rr][cc] && colorOf(bd[rr][cc])!==side) res.push([rr,cc]);
     }
-    // (אין en passant בגרסה זו)
   } else if(type==='N'){
-    const KN = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
-    for(const [dr,dc] of KN){
-      const rr=r+dr, cc=c+dc;
-      if(!inBounds(rr,cc)) continue;
-      const t=bd[rr][cc];
-      if(!t || colorOf(t)!==side) res.push([rr,cc]);
+    for(const [dr,dc] of [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]]){
+      const rr=r+dr,cc=c+dc; if(!inBounds(rr,cc)) continue;
+      const t=bd[rr][cc]; if(!t || colorOf(t)!==side) res.push([rr,cc]);
     }
-  } else if(type==='B' || type==='R' || type==='Q'){
-    const D = [];
-    if(type!=='R') D.push([-1,-1],[-1,1],[1,-1],[1,1]);
-    if(type!=='B') D.push([-1,0],[1,0],[0,-1],[0,1]);
+  } else if(type==='B'||type==='R'||type==='Q'){
+    const D=[]; if(type!=='R') D.push([-1,-1],[-1,1],[1,-1],[1,1]); if(type!=='B') D.push([-1,0],[1,0],[0,-1],[0,1]);
     for(const [dr,dc] of D){
-      let rr=r+dr, cc=c+dc;
+      let rr=r+dr,cc=c+dc;
       while(inBounds(rr,cc)){
         const t=bd[rr][cc];
-        if(!t){ res.push([rr,cc]); }
-        else { if(colorOf(t)!==side) res.push([rr,cc]); break; }
+        if(!t) res.push([rr,cc]); else { if(colorOf(t)!==side) res.push([rr,cc]); break; }
         rr+=dr; cc+=dc;
       }
     }
   } else if(type==='K'){
-    for(let dr=-1; dr<=1; dr++)
-      for(let dc=-1; dc<=1; dc++){
-        if(!dr && !dc) continue;
-        const rr=r+dr, cc=c+dc;
-        if(!inBounds(rr,cc)) continue;
-        const t=bd[rr][cc];
-        if(!t || colorOf(t)!==side) res.push([rr,cc]);
-      }
-    // (אין הצרחה בגרסה זו)
+    for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
+      if(!dr && !dc) continue; const rr=r+dr,cc=c+dc; if(!inBounds(rr,cc)) continue;
+      const t=bd[rr][cc]; if(!t || colorOf(t)!==side) res.push([rr,cc]);
+    }
   }
   return res;
 }
-
-// בדיקת חוקיות מלאה: לא להשאיר מלך בשח
+function cloneBoard(bd){ return bd.map(r=>r.slice()); }
 function legalMovesFrom(bd, r, c){
-  const side = colorOf(bd[r][c]);
-  const moves = [];
-  for(const [rr,cc] of pseudoMoves(bd, r, c)){
-    const copy = cloneBoard(bd);
-    // בצע
-    copy[rr][cc] = copy[r][c];
-    copy[r][c] = '';
-    // קידום אוטומטי
-    const t = typeOf(copy[rr][cc]);
-    if(t==='P' && (rr===0 || rr===7)){
-      copy[rr][cc] = side + 'Q';
-    }
-    // האם המלך של הצד תחת שח?
-    const kpos = findKing(copy, side);
-    if(!kpos) continue; // לא אמור לקרות
-    const inCheck = squareAttacked(copy, kpos[0], kpos[1], side==='w'?'b':'w');
-    if(!inCheck) moves.push([rr,cc]);
+  const side = colorOf(bd[r][c]); const out=[];
+  for(const [rr,cc] of pseudoMoves(bd,r,c)){
+    const copy=cloneBoard(bd); copy[rr][cc]=copy[r][c]; copy[r][c]='';
+    if(typeOf(copy[rr][cc])==='P' && (rr===0||rr===7)) copy[rr][cc]=side+'Q';
+    const kpos=findKing(copy, side); if(!kpos) continue;
+    const inCheck=squareAttacked(copy,kpos[0],kpos[1], side==='w'?'b':'w');
+    if(!inCheck) out.push([rr,cc]);
   }
-  return moves;
+  return out;
 }
-
 function allLegalMoves(bd, side){
-  const all=[];
-  for(let r=0;r<8;r++)
-    for(let c=0;c<8;c++){
-      if(colorOf(bd[r][c])!==side) continue;
-      const ms = legalMovesFrom(bd, r, c);
-      for(const m of ms) all.push([[r,c], m]);
-    }
-  return all;
+  const all=[]; for(let r=0;r<8;r++) for(let c=0;c<8;c++){
+    if(colorOf(bd[r][c])!==side) continue;
+    for(const m of legalMovesFrom(bd,r,c)) all.push([[r,c],m]);
+  } return all;
 }
 
-function cloneBoard(bd){ return bd.map(row=>row.slice()); }
-
-// מינוח בסיסי — אלגברה
-const fileChar = c => String.fromCharCode('a'.charCodeAt(0)+c);
-const rankChar = r => String(8-r);
-function notation(from,to,pc,captured){
-  const t = typeOf(pc);
-  const pieceLetter = (t==='P') ? '' : t;
-  const cap = captured ? 'x' : '-';
-  return pieceLetter + fileChar(from[1]) + rankChar(from[0]) + cap + fileChar(to[1]) + rankChar(to[0]);
-}
-
-// =================== תצוגה ===================
+/* ========= תצוגה ========= */
 const boardEl = document.getElementById('board');
 const statusEl = document.getElementById('status');
 const movesEl = document.getElementById('moves');
@@ -314,240 +309,319 @@ const aiLevelSel = document.getElementById('aiLevel');
 const btnNew = document.getElementById('new');
 const btnUndo = document.getElementById('undo');
 
-let selected = null;
-let legalHints = []; // רשימת יעדים חוקיים מהבחירה הנוכחית
-
-function reset(){
-  board = startPosition();
-  turn = 'w';
-  history = [];
-  selected = null;
-  legalHints = [];
-  draw();
-  updateStatus();
-  maybeAIMove();
+let selected=null, legalHints=[];
+const fileChar = c => String.fromCharCode('a'.charCodeAt(0)+c);
+const rankChar = r => String(8-r);
+function notation(from,to,pc,captured){
+  const t=typeOf(pc); const pieceLetter=(t==='P')?'':t; const cap=captured?'x':'-';
+  return pieceLetter + fileChar(from[1]) + rankChar(from[0]) + cap + fileChar(to[1]) + rankChar(to[0]);
 }
 
+/* ========= סקינים ========= */
+let coins = 300;
+const coinBox = document.getElementById('coins');
+
+const BOARD_THEMES = [
+  {id:'classic', name:'Classic', light:'#eeeed2', dark:'#769656', price:0, owned:true},
+  {id:'charcoal', name:'Charcoal', light:'#cfd2d6', dark:'#4b5563', price:80, owned:false},
+  {id:'sunset', name:'Sunset', light:'#ffe5d9', dark:'#ff9770', price:80, owned:false},
+  {id:'ocean', name:'Ocean', light:'#d0f4ff', dark:'#2aa1c0', price:80, owned:false},
+  {id:'vintage', name:'Vintage', light:'#f3ecd4', dark:'#c3a27b', price:80, owned:false},
+];
+
+const PIECE_THEMES = [
+  {id:'unicode', name:'Unicode', type:'unicode', price:0, owned:true},
+  {id:'letters', name:'Letters Discs', type:'letters', price:120, owned:false},
+  {id:'flat', name:'Flat Blocks', type:'flat', price:120, owned:false},
+];
+
+let currentBoardTheme = 'classic';
+let currentPieceTheme = 'unicode';
+
+function applyBoardTheme(id){
+  const t = BOARD_THEMES.find(x=>x.id===id)||BOARD_THEMES[0];
+  document.documentElement.style.setProperty('--light', t.light);
+  document.documentElement.style.setProperty('--dark', t.dark);
+  currentBoardTheme = id;
+}
+function applyPieceTheme(id){
+  const t = PIECE_THEMES.find(x=>x.id===id)||PIECE_THEMES[0];
+  currentPieceTheme = id;
+  draw(); // מרנדר מחדש
+}
+
+function pieceLabel(pc){
+  const s=colorOf(pc), t=typeOf(pc);
+  if(currentPieceTheme==='unicode'){
+    return `<span class="piece ${currentPieceTheme}" style="--pieceColor:${s==='w'?'#111':'#111'}">${U[s][t]}</span>`;
+  } else if(currentPieceTheme==='letters'){
+    return `<span class="piece ${currentPieceTheme} ${s}">${t}</span>`;
+  } else { // flat
+    return `<span class="piece ${currentPieceTheme} ${s}">${t}</span>`;
+  }
+}
+
+/* ========= ציור לוח ========= */
 function draw(){
   boardEl.innerHTML='';
   for(let r=0;r<8;r++){
     for(let c=0;c<8;c++){
-      const sq = document.createElement('div');
-      sq.className = 'sq ' + (((r+c)%2===0) ? 'light' : 'dark');
-      sq.dataset.r = r; sq.dataset.c = c;
-      const pc = board[r][c];
-      if(pc){
-        const side = pc[0], typ = pc[1];
-        sq.textContent = U[side][typ];
-      } else {
-        sq.textContent = '';
-      }
-      // הדגשות
+      const sq=document.createElement('div');
+      sq.className='sq '+(((r+c)%2===0)?'light':'dark');
+      sq.dataset.r=r; sq.dataset.c=c;
+      const pc=board[r][c];
+      if(pc){ sq.innerHTML = pieceLabel(pc); }
       if(selected && selected[0]===r && selected[1]===c) sq.classList.add('sel');
       for(const [rr,cc,cap] of legalHints){
-        if(rr===r && cc===c){
-          sq.classList.add('hint');
-          if(cap) sq.classList.add('capture');
-        }
+        if(rr===r && cc===c){ sq.classList.add('hint'); if(cap) sq.classList.add('capture'); }
       }
-      sq.addEventListener('click', onSquare);
+      sq.addEventListener('click', onSquareWrapped);
       boardEl.appendChild(sq);
     }
   }
 }
 
+/* ========= מצב וסטטוס ========= */
 function updateStatus(){
-  const side = (turn==='w')?'לבן':'שחור';
-  // בדיקת סוף משחק
-  const moves = allLegalMoves(board, turn);
-  const kpos = findKing(board, turn);
-  const inCheck = kpos ? squareAttacked(board, kpos[0], kpos[1], turn==='w'?'b':'w') : false;
+  const side=(turn==='w')?'לבן':'שחור';
+  const moves=allLegalMoves(board, turn);
+  const kpos=findKing(board, turn);
+  const inCheck=kpos ? squareAttacked(board,kpos[0],kpos[1], turn==='w'?'b':'w'):false;
   if(moves.length===0){
-    if(inCheck) statusEl.textContent = `מט! ${side} תחת שח — ניצחון ל-${turn==='w'?'שחור':'לבן'}.`;
-    else statusEl.textContent = 'פט! תיקו.';
+    if(inCheck) statusEl.textContent=`מט! ${side} תחת שח — ניצחון ל-${turn==='w'?'שחור':'לבן'}.`;
+    else statusEl.textContent='פט! תיקו.';
     return;
   }
-  statusEl.textContent = (inCheck?`שח! `:'') + `תור ${side}`;
-  // רשימת מהלכים
+  statusEl.textContent=(inCheck?'שח! ':'')+`תור ${side}`;
   movesEl.textContent = history.map((h,i)=>((i%2===0)?(Math.floor(i/2)+1)+'. ':'')+h).join(' ');
 }
 
+/* ========= אינטראקציה ========= */
 function onSquare(e){
-  if(isAIsTurn()) return; // מניעת לחיצות בזמן תור מחשב
-  const r = +e.currentTarget.dataset.r;
-  const c = +e.currentTarget.dataset.c;
-  const pc = board[r][c];
+  if(isAIsTurn()) return;
+  const r=+e.currentTarget.dataset.r, c=+e.currentTarget.dataset.c;
+  const pc=board[r][c];
 
-  // אם אין בחירה — בחר כלי מהצבע הנכון
   if(!selected){
     if(pc && colorOf(pc)===turn){
       selected=[r,c];
-      legalHints = legalMovesFrom(board, r, c).map(([rr,cc])=>[rr,cc, !!board[rr][cc]]);
+      legalHints=legalMovesFrom(board,r,c).map(([rr,cc])=>[rr,cc, !!board[rr][cc]]);
       draw();
     }
     return;
   }
-
-  // אם לוחצים על כלי מאותו צד — החלפת בחירה
   if(pc && colorOf(pc)===turn){
     selected=[r,c];
-    legalHints = legalMovesFrom(board, r, c).map(([rr,cc])=>[rr,cc, !!board[rr][cc]]);
-    draw();
-    return;
+    legalHints=legalMovesFrom(board,r,c).map(([rr,cc])=>[rr,cc, !!board[rr][cc]]);
+    draw(); return;
   }
+  const isLegal=legalHints.some(([rr,cc])=>rr===r&&cc===c);
+  if(!isLegal){ selected=null; legalHints=[]; draw(); return; }
 
-  // ניסיון לבצע מסע
-  const isLegal = legalHints.some(([rr,cc])=> rr===r && cc===c);
-  if(!isLegal){ // ביטול בחירה
-    selected=null; legalHints=[]; draw();
-    return;
-  }
-
-  // בצע
-  const from = selected.slice();
-  const moving = board[from[0]][from[1]];
-  const captured = board[r][c] || '';
-  board[r][c] = moving;
-  board[from[0]][from[1]] = '';
-
-  // קידום אוטומטי לרגלי
-  if(typeOf(board[r][c])==='P' && (r===0 || r===7)) board[r][c] = colorOf(board[r][c])+'Q';
-
-  const san = notation(from,[r,c],moving,captured);
-  history.push(san);
-
-  selected=null; legalHints=[];
-  turn = (turn==='w')?'b':'w';
-  draw(); updateStatus();
-  maybeAIMove();
+  pushState();
+  const from=selected.slice(); const moving=board[from[0]][from[1]]; const captured=board[r][c]||'';
+  board[r][c]=moving; board[from[0]][from[1]]='';
+  if(typeOf(board[r][c])==='P' && (r===0||r===7)) board[r][c]=colorOf(board[r][c])+'Q';
+  history.push(notation(from,[r,c],moving,captured));
+  selected=null; legalHints=[]; turn=(turn==='w')?'b':'w';
+  draw(); updateStatus(); maybeAIMove();
 }
+const onSquareWrapped = (e)=>onSquare(e);
 
-// =================== Undo ===================
-function undoOnce(){
-  // שמירה מינימלית: שחזור מהלכים מהיסטוריה לא אפשרי בלי מצב קודם.
-  // לכן נשמור ערמות מצבים לצורך Undo.
-}
-const stack = [];
+/* ========= Undo ========= */
+const stack=[];
 function pushState(){
-  stack.push({
-    board: board.map(r=>r.slice()),
-    turn,
-    history: history.slice()
-  });
+  stack.push({ board: board.map(r=>r.slice()), turn, history: history.slice(), curBoard: currentBoardTheme, curPiece: currentPieceTheme, coins });
 }
 function popState(){
-  const s = stack.pop();
-  if(!s) return;
-  board = s.board.map(r=>r.slice());
-  turn = s.turn;
-  history = s.history.slice();
-  selected=null; legalHints=[];
-  draw(); updateStatus();
+  const s=stack.pop(); if(!s) return;
+  board=s.board.map(r=>r.slice()); turn=s.turn; history=s.history.slice();
+  currentBoardTheme=s.curBoard; currentPieceTheme=s.curPiece; coins=s.coins; coinBox.textContent=coins;
+  applyBoardTheme(currentBoardTheme); applyPieceTheme(currentPieceTheme);
+  selected=null; legalHints=[]; draw(); updateStatus();
 }
 
-// נעטוף פעולות שמשנות מצב
-function doUserMoveWrapper(fn){
-  pushState();
-  try{ fn(); }
-  catch(e){ console.error(e); popState(); }
-}
-
-// כפתורים
-btnNew.addEventListener('click', ()=>{ stack.length=0; reset(); });
-btnUndo.addEventListener('click', ()=>{ popState(); });
-
-// נעילת מצב לפני כל הזזה ידנית (ב-handler ביצוע המסע)
-const origOnSquare = onSquare;
-function onSquareWrapped(e){ doUserMoveWrapper(()=>origOnSquare(e)); }
-document.addEventListener('DOMContentLoaded', ()=>{
-  // יוחלף בציור הראשון
-});
-
-// =================== AI פשוט ===================
+/* ========= AI ========= */
 function isAIsTurn(){
   if(modeSel.value!=='ai') return false;
-  return turn === aiSideSel.value;
+  return turn===aiSideSel.value;
 }
-
-function evaluateMaterial(bd){
+function evaluate(bd){
+  // חומר + ניידות (קלה)
   let score=0;
-  for(let r=0;r<8;r++)
-    for(let c=0;c<8;c++){
-      const pc = bd[r][c];
-      if(!pc) continue;
-      const s = colorOf(pc), t=typeOf(pc);
-      score += (s==='w'?1:-1) * (PV[t]||0);
-    }
+  for(let r=0;r<8;r++) for(let c=0;c<8;c++){
+    const pc=bd[r][c]; if(!pc) continue;
+    score += (colorOf(pc)==='w'?1:-1) * (PV[typeOf(pc)]||0);
+  }
+  // ניידות: הבדל בכמות המסעים החוקיים
+  const wm=allLegalMoves(bd,'w').length;
+  const bm=allLegalMoves(bd,'b').length;
+  score += 0.1*(wm-bm);
   return score;
 }
-
-function pickAIMove(){
-  const side = turn;
-  const moves = allLegalMoves(board, side);
-  if(moves.length===0) return null;
-  const level = +aiLevelSel.value;
-
-  if(level===0){
-    // רנדומלי
-    return moves[Math.floor(Math.random()*moves.length)];
-  }
-
-  // חמדן 1 ply: בוחר את המסע עם הערכת חומר מקסימלית אחרי המסע
-  let best = null, bestScore = (side==='w'?-Infinity:Infinity);
+function pickRandomMove(moves){ return moves[Math.floor(Math.random()*moves.length)]; }
+function pickGreedyMove(){
+  const side=turn, moves=allLegalMoves(board, side); if(moves.length===0) return null;
+  let best=null, bestScore=(side==='w'?-Infinity:Infinity);
   for(const [[r,c],[rr,cc]] of moves){
-    const copy = cloneBoard(board);
-    const mv = copy[r][c];
-    const cap = copy[rr][cc];
-    copy[rr][cc] = mv; copy[r][c]='';
-    // קידום
-    if(typeOf(copy[rr][cc])==='P' && (rr===0 || rr===7)) copy[rr][cc] = side+'Q';
-    const sc = evaluateMaterial(copy);
-    if(side==='w'){
-      if(sc>bestScore){ bestScore=sc; best=[[r,c],[rr,cc]]; }
-      // העדף לכידה בשוויון
-      else if(sc===bestScore && cap && !best) best=[[r,c],[rr,cc]];
-    } else {
-      if(sc<bestScore){ bestScore=sc; best=[[r,c],[rr,cc]]; }
-      else if(sc===bestScore && cap && !best) best=[[r,c],[rr,cc]];
-    }
+    const copy=cloneBoard(board); const mv=copy[r][c]; const cap=copy[rr][cc];
+    copy[rr][cc]=mv; copy[r][c]=''; if(typeOf(copy[rr][cc])==='P'&&(rr===0||rr===7)) copy[rr][cc]=side+'Q';
+    const sc=evaluate(copy);
+    if(side==='w'){ if(sc>bestScore){bestScore=sc; best=[[r,c],[rr,cc]];} }
+    else{ if(sc<bestScore){bestScore=sc; best=[[r,c],[rr,cc]];} }
   }
   return best || moves[0];
 }
-
+function negamax(bd, depth, alpha, beta, side){
+  // סיום
+  if(depth===0) return (side==='w'?1:-1)*evaluate(bd);
+  const moves=allLegalMoves(bd, side);
+  if(moves.length===0){
+    const kpos=findKing(bd, side);
+    const inCheck=kpos && squareAttacked(bd,kpos[0],kpos[1], side==='w'?'b':'w');
+    if(inCheck) return -99999 + (3-depth); // מט כנגדנו
+    return 0; // פט
+  }
+  let best=-Infinity;
+  for(const [[r,c],[rr,cc]] of moves){
+    const copy=cloneBoard(bd);
+    const mv=copy[r][c];
+    copy[rr][cc]=mv; copy[r][c]='';
+    if(typeOf(copy[rr][cc])==='P'&&(rr===0||rr===7)) copy[rr][cc]=side+'Q';
+    const val = -negamax(copy, depth-1, -beta, -alpha, side==='w'?'b':'w');
+    if(val>best) best=val;
+    if(val>alpha) alpha=val;
+    if(alpha>=beta) break; // גיזום
+  }
+  return best;
+}
+function pickMinimaxMove(depth){
+  const side=turn, moves=allLegalMoves(board, side); if(moves.length===0) return null;
+  let bestMove=null, bestVal=-Infinity; let alpha=-Infinity, beta=Infinity;
+  for(const [[r,c],[rr,cc]] of moves){
+    const copy=cloneBoard(board);
+    const mv=copy[r][c]; copy[rr][cc]=mv; copy[r][c]='';
+    if(typeOf(copy[rr][cc])==='P'&&(rr===0||rr===7)) copy[rr][cc]=side+'Q';
+    const val = -negamax(copy, depth-1, -beta, -alpha, side==='w'?'b':'w');
+    if(val>bestVal){ bestVal=val; bestMove=[[r,c],[rr,cc]]; }
+    if(val>alpha) alpha=val;
+  }
+  return bestMove || moves[0];
+}
 function maybeAIMove(){
   if(!isAIsTurn()) return;
-  // שיהוי קטן לחוויה
   setTimeout(()=>{
-    const mv = pickAIMove();
+    const lvl=+aiLevelSel.value;
+    let mv=null;
+    if(lvl===0) mv = pickRandomMove(allLegalMoves(board, turn));
+    else if(lvl===1) mv = pickGreedyMove();
+    else mv = pickMinimaxMove(lvl); // 2 או 3
     if(!mv) { updateStatus(); return; }
 
-    pushState(); // אפשרות Undo למסע המחשב
-
+    pushState();
     const [[r,c],[rr,cc]] = mv;
-    const moving = board[r][c];
-    const captured = board[rr][cc] || '';
+    const moving=board[r][c]; const captured=board[rr][cc]||'';
     board[rr][cc]=moving; board[r][c]='';
-    if(typeOf(board[rr][cc])==='P' && (rr===0 || rr===7)) board[rr][cc]=colorOf(board[rr][cc])+'Q';
-
-    const san = notation([r,c],[rr,cc],moving,captured);
-    history.push(san);
-
-    turn = (turn==='w')?'b':'w';
+    if(typeOf(board[rr][cc])==='P'&&(rr===0||rr===7)) board[rr][cc]=colorOf(board[rr][cc])+'Q';
+    history.push(notation([r,c],[rr,cc],moving,captured));
+    turn=(turn==='w')?'b':'w';
     draw(); updateStatus();
   }, 220);
 }
 
-// =================== אתחול ===================
-function wireSquaresHandlers(){
-  // לאחר draw(), רושמים מאזינים שמפנים ל-onSquareWrapped
-  document.querySelectorAll('.sq').forEach(sq=>{
-    sq.addEventListener('click', onSquareWrapped);
+/* ========= אתחול ========= */
+const btnShop = document.getElementById('shop');
+const shopModal = document.getElementById('shopModal');
+const shopClose = document.getElementById('shopClose');
+const shopX = document.getElementById('shopX');
+const boardSkinsEl = document.getElementById('boardSkins');
+const pieceSkinsEl = document.getElementById('pieceSkins');
+
+function reset(){
+  board=startPosition(); turn='w'; history=[]; selected=null; legalHints=[];
+  applyBoardTheme(currentBoardTheme); applyPieceTheme(currentPieceTheme);
+  draw(); updateStatus(); maybeAIMove(); coinBox.textContent=coins;
+}
+btnNew.addEventListener('click', ()=>{ stack.length=0; reset(); });
+btnUndo.addEventListener('click', ()=>{ popState(); });
+
+/* ========= חנות ========= */
+function renderShop(){
+  boardSkinsEl.innerHTML=''; pieceSkinsEl.innerHTML='';
+  for(const t of BOARD_THEMES){
+    const it=document.createElement('div'); it.className='shop-item'+(t.owned?'':' locked');
+    it.innerHTML=`
+      <div class="row-between"><h4>${t.name}</h4><span class="tag">#${t.id}</span></div>
+      <div class="preview" style="grid-template-columns:repeat(4,1fr)">
+        ${['', '', '', '', '', '', '', ''].map((_,i)=>{
+          const light = t.light, dark=t.dark; const color=((i%2)===0)?light:dark;
+          return `<div class="cell" style="background:${color}"></div>`;
+        }).join('')}
+      </div>
+      <div class="row-between">
+        <span class="tag">${t.owned?'בבעלותך':'מחיר: 🪙'+t.price}</span>
+        <button class="btn-small ${t.owned?'green':''}" data-id="${t.id}" data-type="board">
+          ${t.owned?(t.id===currentBoardTheme?'נבחר':'בחר'): 'קנה'}
+        </button>
+      </div>
+    `;
+    boardSkinsEl.appendChild(it);
+  }
+  for(const t of PIECE_THEMES){
+    const it=document.createElement('div'); it.className='shop-item'+(t.owned?'':' locked');
+    it.innerHTML=`
+      <div class="row-between"><h4>${t.name}</h4><span class="tag">#${t.id}</span></div>
+      <div class="preview" style="place-items:center;">
+        <!-- דמו קטן -->
+        <div style="display:flex; gap:6px; grid-column: span 4 / auto; grid-row: span 2 / auto; justify-content:center;">
+          ${['wK','wQ','bK','bQ'].map(p=>{
+            const s=colorOf(p), ch=typeOf(p);
+            let html='';
+            if(t.type==='unicode'){ html = `<span class="piece skin-unicode" style="font-size:28px">${U[s][ch]}</span>`; }
+            else if(t.type==='letters'){ html = `<span class="piece skin-letters ${s}" style="width:40px;height:40px;font-size:16px">${ch}</span>`; }
+            else { html = `<span class="piece skin-flat ${s}" style="width:40px;height:40px;font-size:18px">${ch}</span>`; }
+            return html;
+          }).join('')}
+        </div>
+      </div>
+      <div class="row-between">
+        <span class="tag">${t.owned?'בבעלותך':'מחיר: 🪙'+t.price}</span>
+        <button class="btn-small ${t.owned?'green':''}" data-id="${t.id}" data-type="piece">
+          ${t.owned?(t.id===currentPieceTheme?'נבחר':'בחר'):'קנה'}
+        </button>
+      </div>
+    `;
+    pieceSkinsEl.appendChild(it);
+  }
+
+  // מאזינים
+  shopModal.querySelectorAll('button[data-id]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const id=btn.getAttribute('data-id');
+      const type=btn.getAttribute('data-type');
+      if(type==='board'){
+        const skin=BOARD_THEMES.find(x=>x.id===id);
+        if(!skin.owned){
+          if(coins<skin.price) { alert('אין מספיק מטבעות.'); return; }
+          coins -= skin.price; skin.owned=true; coinBox.textContent=coins;
+        }
+        applyBoardTheme(id); draw(); renderShop();
+      } else {
+        const skin=PIECE_THEMES.find(x=>x.id===id);
+        if(!skin.owned){
+          if(coins<skin.price) { alert('אין מספיק מטבעות.'); return; }
+          coins -= skin.price; skin.owned=true; coinBox.textContent=coins;
+        }
+        applyPieceTheme(id); draw(); renderShop();
+      }
+    };
   });
 }
+btnShop.addEventListener('click', ()=>{ shopModal.classList.add('open'); renderShop(); });
+shopClose.addEventListener('click', ()=> shopModal.classList.remove('open'));
+shopX.addEventListener('click', ()=> shopModal.classList.remove('open'));
 
-const _draw = draw;
-draw = function(){ _draw(); wireSquaresHandlers(); };
-
+/* ========= הפעלה ========= */
 reset();
 </script>
 </body>

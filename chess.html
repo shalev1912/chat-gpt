@@ -6,74 +6,76 @@
 <title>משחק שחמט מקצועי נגד Stockfish</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="https://unpkg.com/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css" />
+
+<!-- CSS של Chessboard.js -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/0.3.0/css/chessboard-0.3.0.min.css" />
 
 <style>
-  body {
-    font-family: 'Heebo', sans-serif;
-    background: linear-gradient(135deg, #1e1e2f, #2d4d61);
-    margin: 0; padding: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    color: white;
-    min-height: 100vh;
-  }
-  h1 {
-    margin-bottom: 20px;
-    font-weight: 700;
-    font-size: 2rem;
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.4);
-  }
-  .controls {
-    margin-bottom: 20px;
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  select, button {
-    font-size: 1rem;
-    padding: 10px 14px;
-    border-radius: 12px;
-    border: none;
-    cursor: pointer;
-    font-weight: 700;
-  }
-  select { min-width: 150px; color:#222; }
-  button {
-    background: #6a5acd;
-    color: white;
-    transition: transform 0.2s, background-color 0.2s;
-  }
-  button:hover { background: #5548b6; transform: scale(1.05); }
-  #difficultySelect { display: none; }
-  #board {
-    width: 480px;
-    max-width: 90vw;
-    margin-bottom: 15px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-    border-radius: 12px;
-  }
-  #status {
-    font-weight: 700;
-    min-height: 32px;
-    font-size: 1.2rem;
-    text-align: center;
-    margin-bottom: 15px;
-    padding: 5px 10px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 8px;
-  }
-  @media (max-width: 520px) { #board { width: 95vw; } }
-  a#backHome {
-    margin-top: auto;
-    color: #eee;
-    text-decoration: none;
-    font-weight: 700;
-    font-size: 1rem;
-  }
-  a#backHome:hover { color: #b8b8ff; }
+body {
+  font-family: 'Heebo', sans-serif;
+  background: linear-gradient(135deg, #1e1e2f, #2d4d61);
+  margin: 0; padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: white;
+  min-height: 100vh;
+}
+h1 {
+  margin-bottom: 20px;
+  font-weight: 700;
+  font-size: 2rem;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.4);
+}
+.controls {
+  margin-bottom: 20px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+select, button {
+  font-size: 1rem;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+}
+select { min-width: 150px; color:#222; }
+button {
+  background: #6a5acd;
+  color: white;
+  transition: transform 0.2s, background-color 0.2s;
+}
+button:hover { background: #5548b6; transform: scale(1.05); }
+#difficultySelect { display: none; }
+#board {
+  width: 480px;
+  max-width: 90vw;
+  margin-bottom: 15px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+  border-radius: 12px;
+}
+#status {
+  font-weight: 700;
+  min-height: 32px;
+  font-size: 1.2rem;
+  text-align: center;
+  margin-bottom: 15px;
+  padding: 5px 10px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 8px;
+}
+@media (max-width: 520px) { #board { width: 95vw; } }
+a#backHome {
+  margin-top: auto;
+  color: #eee;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1rem;
+}
+a#backHome:hover { color: #b8b8ff; }
 </style>
 </head>
 <body>
@@ -103,18 +105,12 @@
 <a id="backHome" href="https://shalev1912.github.io/chat-gpt/home.html">← חזרה למסך הבית</a>
 
 <!-- ספריות -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.13.4/chess.min.js"></script>
-<script src="https://unpkg.com/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/0.3.0/js/chessboard-0.3.0.min.js"></script>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-  let board = null;
-  let game = new Chess();
-  let engine = null;
-  let engineReady = false;
-  let waitingForEngineMove = false;
-  let resigned = false;
-
+  const game = new Chess();
   const modeSelect = document.getElementById('modeSelect');
   const difficultySelect = document.getElementById('difficultySelect');
   const restartBtn = document.getElementById('restartBtn');
@@ -122,13 +118,15 @@ document.addEventListener("DOMContentLoaded", function () {
   const resignBtn = document.getElementById('resignBtn');
   const statusEl = document.getElementById('status');
 
+  let engine = null;
+  let engineReady = false;
+  let waitingForEngineMove = false;
+  let resigned = false;
+
   function setStatus(text) { statusEl.textContent = text; }
 
   function updateStatus() {
-    if (resigned) {
-      setStatus('ויתרת על המשחק. לחץ "התחל משחק חדש" כדי לשחק שוב.');
-      return;
-    }
+    if (resigned) { setStatus('ויתרת על המשחק. לחץ "התחל משחק חדש" כדי לשחק שוב.'); return; }
     if (game.in_checkmate()) setStatus('מט! המשחק נגמר.');
     else if (game.in_draw()) setStatus('תיקו!');
     else {
@@ -171,20 +169,13 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function destroyEngine() {
-    if (engine) {
-      try { engine.terminate(); } catch (_) {}
-    }
-    engine = null;
-    engineReady = false;
-    waitingForEngineMove = false;
+    if (engine) { try { engine.terminate(); } catch (_) {} }
+    engine = null; engineReady = false; waitingForEngineMove = false;
   }
 
   function requestEngineMove() {
     if (!engine) createEngine();
-    if (!engineReady) {
-      waitingForEngineMove = true;
-      return;
-    }
+    if (!engineReady) { waitingForEngineMove = true; return; }
     const fen = game.fen();
     const depth = parseInt(difficultySelect.value, 10) || 8;
     engine.postMessage('position fen ' + fen);
@@ -195,8 +186,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function onDragStart (source, piece) {
     if (resigned || game.game_over()) return false;
     if (modeSelect.value === 'stockfish') {
-      if ((game.turn() === 'w' && piece.startsWith('b')) ||
-          (game.turn() === 'b' && piece.startsWith('w'))) return false;
+      if ((game.turn() === 'w' && piece.startsWith('b')) || (game.turn() === 'b' && piece.startsWith('w'))) return false;
       if (waitingForEngineMove) return false;
     }
     if (game.turn() === 'w' && piece.startsWith('b')) return false;
@@ -204,38 +194,28 @@ document.addEventListener("DOMContentLoaded", function () {
     return true;
   }
 
-  function onDrop (source, target) {
+  function onDrop(source, target) {
     const move = game.move({ from: source, to: target, promotion: 'q' });
     if (move === null) return 'snapback';
     board.position(game.fen());
     updateStatus();
-    if (modeSelect.value === 'stockfish' && !game.game_over()) {
-      setTimeout(requestEngineMove, 200);
-    }
+    if (modeSelect.value === 'stockfish' && !game.game_over()) setTimeout(requestEngineMove, 200);
   }
 
-  function onSnapEnd () { board.position(game.fen()); }
+  function onSnapEnd() { board.position(game.fen()); }
 
   function resetGame() {
     resigned = false;
     game.reset();
     board.start();
     updateStatus();
-    if (modeSelect.value === 'stockfish') {
-      createEngine();
-    } else {
-      destroyEngine();
-    }
+    if (modeSelect.value === 'stockfish') createEngine(); else destroyEngine();
   }
 
   function undoMove() {
     if (resigned) return;
-    if (modeSelect.value === 'stockfish') {
-      game.undo();
-      game.undo();
-    } else {
-      game.undo();
-    }
+    if (modeSelect.value === 'stockfish') { game.undo(); game.undo(); } 
+    else { game.undo(); }
     board.position(game.fen());
     updateStatus();
   }
@@ -246,24 +226,18 @@ document.addEventListener("DOMContentLoaded", function () {
     setStatus('ויתרת על המשחק. לחץ "התחל משחק חדש" כדי לשחק שוב.');
   }
 
-  board = Chessboard('board', {
+  const board = ChessBoard('board', {
     position: 'start',
     draggable: true,
     onDragStart,
     onDrop,
     onSnapEnd,
-    pieceTheme: piece => 
-      'https://cdn.jsdelivr.net/npm/chessboardjs@1.0.0/www/img/chesspieces/wikipedia/' + piece + '.png'
+    pieceTheme: piece => 'https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/0.3.0/img/chesspieces/wikipedia/' + piece + '.png'
   });
 
   modeSelect.addEventListener('change', () => {
-    if (modeSelect.value === 'stockfish') {
-      difficultySelect.style.display = 'inline-block';
-      createEngine();
-    } else {
-      difficultySelect.style.display = 'none';
-      destroyEngine();
-    }
+    if (modeSelect.value === 'stockfish') { difficultySelect.style.display = 'inline-block'; createEngine(); }
+    else { difficultySelect.style.display = 'none'; destroyEngine(); }
     resetGame();
   });
 
@@ -274,5 +248,6 @@ document.addEventListener("DOMContentLoaded", function () {
   updateStatus();
 });
 </script>
+
 </body>
 </html>

@@ -185,12 +185,83 @@
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
+
+        .system-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .info-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .info-label {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-bottom: 3px;
+        }
+
+        .info-value {
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .info-value.ok {
+            color: #4CAF50;
+        }
+
+        .info-value.error {
+            color: #f44336;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            .title {
+                font-size: 2rem;
+            }
+            
+            .buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                min-width: auto;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1 class="title">🔄 GitHub Auto Updater</h1>
         <p class="subtitle">מעדכן אוטומטית את גיטהאב עם כל שינוי באפליקציה</p>
+        
+        <div class="system-info">
+            <div class="info-item">
+                <div class="info-label">אינטרנט</div>
+                <div class="info-value" id="internetStatus">בודק...</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Git</div>
+                <div class="info-value" id="gitStatus">בודק...</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Repository</div>
+                <div class="info-value" id="repoStatus">בודק...</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">הרשאות</div>
+                <div class="info-value" id="authStatus">בודק...</div>
+            </div>
+        </div>
         
         <div class="status">
             <div class="status-text">
@@ -222,11 +293,17 @@
                 this.isUpdating = false;
                 this.autoUpdate = false;
                 this.watchInterval = null;
+                this.lastUpdate = Date.now();
+                this.changeDetected = false;
                 this.logContainer = document.getElementById('logContainer');
                 this.statusIndicator = document.getElementById('statusIndicator');
                 this.statusText = document.getElementById('statusText');
                 this.autoUpdateBtn = document.getElementById('autoUpdateBtn');
                 this.manualUpdateBtn = document.getElementById('manualUpdateBtn');
+                this.internetStatus = document.getElementById('internetStatus');
+                this.gitStatus = document.getElementById('gitStatus');
+                this.repoStatus = document.getElementById('repoStatus');
+                this.authStatus = document.getElementById('authStatus');
                 
                 this.init();
             }
@@ -249,6 +326,7 @@
                     const status = await response.json();
                     
                     this.updateStatusDisplay(status);
+                    this.updateSystemInfo(status);
                     
                     if (status.hasChanges && this.autoUpdate) {
                         this.addLog('נמצאו שינויים - מעדכן אוטומטית...', 'info');
@@ -272,6 +350,21 @@
                     this.statusText.textContent = 'אין שינויים';
                     this.statusIndicator.className = 'status-indicator inactive';
                 }
+            }
+
+            // עדכון מידע מערכת
+            updateSystemInfo(data) {
+                this.internetStatus.textContent = data.internetOk ? 'מחובר' : 'לא מחובר';
+                this.internetStatus.className = `info-value ${data.internetOk ? 'ok' : 'error'}`;
+                
+                this.gitStatus.textContent = data.gitInstalled ? 'מותקן' : 'לא מותקן';
+                this.gitStatus.className = `info-value ${data.gitInstalled ? 'ok' : 'error'}`;
+                
+                this.repoStatus.textContent = data.repoValid ? 'תקין' : 'לא תקין';
+                this.repoStatus.className = `info-value ${data.repoValid ? 'ok' : 'error'}`;
+                
+                this.authStatus.textContent = data.authConfigured ? 'מוגדר' : 'לא מוגדר';
+                this.authStatus.className = `info-value ${data.authConfigured ? 'ok' : 'error'}`;
             }
 
             // הוספת הודעה ללוג

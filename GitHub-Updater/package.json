@@ -1,7 +1,7 @@
 {
   "name": "github-updater",
   "version": "1.0.0",
-  "description": "GitHub Auto Updater Server",
+  "description": "GitHub Auto Updater Server with Auto Port Detection",
   "main": "github-updater-server.js",
   "scripts": {
     "start": "node github-updater-server.js",
@@ -13,7 +13,8 @@
   "keywords": [
     "github",
     "updater",
-    "auto"
+    "auto",
+    "port-detection"
   ],
   "author": "Your Name",
   "license": "MIT"

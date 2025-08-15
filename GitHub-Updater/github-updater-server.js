@@ -2,9 +2,12 @@ const express = require('express');
 const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const net = require('net');
 
 const app = express();
-const PORT = 3001;
+
+// רשימת פורטים לנסות
+const PORTS = [3001, 3002, 3003, 3004, 3005, 8080, 8081, 8082, 5000, 5001];
 
 // Middleware
 app.use(express.json());
@@ -12,6 +15,32 @@ app.use(express.static('.'));
 
 // נתיב לפרויקט - חזרה לתיקייה הראשית
 const PROJECT_PATH = path.join(__dirname, '..');
+
+// בדיקת פורט פנוי
+function isPortAvailable(port) {
+    return new Promise((resolve) => {
+        const server = net.createServer();
+        server.listen(port, () => {
+            server.once('close', () => {
+                resolve(true);
+            });
+            server.close();
+        });
+        server.on('error', () => {
+            resolve(false);
+        });
+    });
+}
+
+// מציאת פורט פנוי
+async function findAvailablePort() {
+    for (const port of PORTS) {
+        if (await isPortAvailable(port)) {
+            return port;
+        }
+    }
+    throw new Error('לא נמצא פורט פנוי');
+}
 
 class GitHubUpdater {
     constructor() {
@@ -298,10 +327,26 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// הפעלת השרת
-app.listen(PORT, () => {
-    console.log(`🚀 GitHub Updater Server פועל על פורט ${PORT}`);
-    console.log(`🌐 פתח את הדפדפן בכתובת: http://localhost:${PORT}/github-auto-updater.html`);
-    console.log(`📁 נתיב הפרויקט: ${PROJECT_PATH}`);
-    console.log(`⏰ זמן הפעלה: ${new Date().toLocaleString('he-IL')}`);
-});
+// הפעלת השרת עם אוטומציה
+async function startServer() {
+    try {
+        const PORT = await findAvailablePort();
+        
+        app.listen(PORT, () => {
+            console.log(`🚀 GitHub Updater Server פועל על פורט ${PORT}`);
+            console.log(`🌐 פתח את הדפדפן בכתובת: http://localhost:${PORT}/github-auto-updater.html`);
+            console.log(`📁 נתיב הפרויקט: ${PROJECT_PATH}`);
+            console.log(`⏰ זמן הפעלה: ${new Date().toLocaleString('he-IL')}`);
+            
+            // שמירת הפורט בקובץ
+            fs.writeFileSync('port.txt', PORT.toString());
+        });
+        
+        return PORT;
+    } catch (error) {
+        console.error('❌ לא הצלחתי למצוא פורט פנוי:', error.message);
+        process.exit(1);
+    }
+}
+
+startServer();

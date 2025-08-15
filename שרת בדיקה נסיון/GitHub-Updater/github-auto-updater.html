@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Auto Updater - מעדכן אוטומטי</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .title {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: white;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .status {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .status-text {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .status-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        .status-indicator.active {
+            background: #4CAF50;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.inactive {
+            background: #f44336;
+        }
+
+        .status-indicator.changes {
+            background: #FF9800;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-width: 150px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .log {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            text-align: right;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 5px;
+            border-radius: 5px;
+        }
+
+        .log-entry.info {
+            background: rgba(33, 150, 243, 0.2);
+        }
+
+        .log-entry.success {
+            background: rgba(76, 175, 80, 0.2);
+        }
+
+        .log-entry.error {
+            background: rgba(244, 67, 54, 0.2);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 10000;
+            animation: slideInRight 0.3s ease;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">🔄 GitHub Auto Updater</h1>
+        <p class="subtitle">מעדכן אוטומטית את גיטהאב עם כל שינוי באפליקציה</p>
+        
+        <div class="status">
+            <div class="status-text">
+                <span class="status-indicator inactive" id="statusIndicator"></span>
+                סטטוס: <span id="statusText">בודק חיבור...</span>
+            </div>
+        </div>
+        
+        <div class="buttons">
+            <button class="btn btn-primary" id="autoUpdateBtn" onclick="toggleAutoUpdate()">
+                ⚡ הפעל עדכון אוטומטי
+            </button>
+            <button class="btn btn-secondary" id="manualUpdateBtn" onclick="manualUpdate()">
+                🔄 עדכון ידני
+            </button>
+            <button class="btn btn-danger" onclick="stopAll()">
+                ⏹️ עצור הכל
+            </button>
+        </div>
+        
+        <div class="log" id="logContainer">
+            <div class="log-entry info">מתחבר לשרת...</div>
+        </div>
+    </div>
+
+    <script>
+        class GitHubAutoUpdater {
+            constructor() {
+                this.isUpdating = false;
+                this.autoUpdate = false;
+                this.watchInterval = null;
+                this.logContainer = document.getElementById('logContainer');
+                this.statusIndicator = document.getElementById('statusIndicator');
+                this.statusText = document.getElementById('statusText');
+                this.autoUpdateBtn = document.getElementById('autoUpdateBtn');
+                this.manualUpdateBtn = document.getElementById('manualUpdateBtn');
+                
+                this.init();
+            }
+
+            // אתחול המערכת
+            async init() {
+                this.addLog('מתחבר לשרת GitHub Updater...', 'info');
+                await this.checkStatus();
+                
+                // בדיקת סטטוס כל 30 שניות
+                setInterval(() => {
+                    this.checkStatus();
+                }, 30000);
+            }
+
+            // בדיקת סטטוס מהשרת
+            async checkStatus() {
+                try {
+                    const response = await fetch('/api/status');
+                    const status = await response.json();
+                    
+                    this.updateStatusDisplay(status);
+                    
+                    if (status.hasChanges && this.autoUpdate) {
+                        this.addLog('נמצאו שינויים - מעדכן אוטומטית...', 'info');
+                        await this.updateToGitHub();
+                    }
+                } catch (error) {
+                    this.addLog('שגיאה בבדיקת סטטוס: ' + error.message, 'error');
+                    this.updateStatusDisplay({ hasChanges: false, isUpdating: false, status: 'שגיאה בחיבור' });
+                }
+            }
+
+            // עדכון תצוגת הסטטוס
+            updateStatusDisplay(status) {
+                if (status.isUpdating) {
+                    this.statusText.textContent = 'מעדכן...';
+                    this.statusIndicator.className = 'status-indicator active';
+                } else if (status.hasChanges) {
+                    this.statusText.textContent = 'יש שינויים';
+                    this.statusIndicator.className = 'status-indicator changes';
+                } else {
+                    this.statusText.textContent = 'אין שינויים';
+                    this.statusIndicator.className = 'status-indicator inactive';
+                }
+            }
+
+            // הוספת הודעה ללוג
+            addLog(message, type = 'info') {
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry ${type}`;
+                logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+                this.logContainer.appendChild(logEntry);
+                this.logContainer.scrollTop = this.logContainer.scrollHeight;
+            }
+
+            // הפעלה/כיבוי עדכון אוטומטי
+            toggleAutoUpdate() {
+                this.autoUpdate = !this.autoUpdate;
+                
+                if (this.autoUpdate) {
+                    this.autoUpdateBtn.textContent = '⏹️ עצור עדכון אוטומטי';
+                    this.autoUpdateBtn.className = 'btn btn-danger';
+                    this.addLog('עדכון אוטומטי הופעל', 'success');
+                    this.showNotification('עדכון אוטומטי הופעל! ⚡');
+                } else {
+                    this.autoUpdateBtn.textContent = '⚡ הפעל עדכון אוטומטי';
+                    this.autoUpdateBtn.className = 'btn btn-primary';
+                    this.addLog('עדכון אוטומטי הופסק', 'info');
+                    this.showNotification('עדכון אוטומטי הופסק! ⏹️');
+                }
+            }
+
+            // עדכון ידני
+            async manualUpdate() {
+                this.manualUpdateBtn.disabled = true;
+                this.manualUpdateBtn.textContent = '⏳ מעדכן...';
+                
+                await this.updateToGitHub();
+                
+                this.manualUpdateBtn.disabled = false;
+                this.manualUpdateBtn.textContent = '🔄 עדכון ידני';
+            }
+
+            // עדכון לגיטהאב
+            async updateToGitHub() {
+                if (this.isUpdating) return;
+                
+                this.isUpdating = true;
+                this.addLog('מתחיל עדכון לגיטהאב...', 'info');
+                
+                try {
+                    const response = await fetch('/api/update', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.addLog(result.message, 'success');
+                        this.showNotification(result.message);
+                    } else {
+                        this.addLog(result.message, 'error');
+                        this.showNotification(result.message);
+                    }
+                    
+                } catch (error) {
+                    this.addLog('שגיאה בעדכון: ' + error.message, 'error');
+                    this.showNotification('אירעה שגיאה בעדכון לגיטהאב');
+                }
+                
+                this.isUpdating = false;
+            }
+
+            // הצגת הודעות
+            showNotification(message) {
+                const notification = document.createElement('div');
+                notification.className = 'notification';
+                notification.textContent = message;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 5000);
+            }
+
+            // עצירת הכל
+            stopAll() {
+                this.autoUpdate = false;
+                this.autoUpdateBtn.textContent = '⚡ הפעל עדכון אוטומטי';
+                this.autoUpdateBtn.className = 'btn btn-primary';
+                this.addLog('כל הפעולות הופסקו', 'info');
+                this.showNotification('כל הפעולות הופסקו! ⏹️');
+            }
+        }
+
+        // יצירת מופע של המערכת
+        const githubAutoUpdater = new GitHubAutoUpdater();
+
+        // פונקציות גלובליות
+        function toggleAutoUpdate() {
+            githubAutoUpdater.toggleAutoUpdate();
+        }
+
+        function manualUpdate() {
+            githubAutoUpdater.manualUpdate();
+        }
+
+        function stopAll() {
+            githubAutoUpdater.stopAll();
+        }
+
+        // ייצוא לפונקציות גלובליות
+        window.githubAutoUpdater = githubAutoUpdater;
+    </script>
+</body>
+</html>

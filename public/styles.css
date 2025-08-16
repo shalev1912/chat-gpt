@@ -18,8 +18,13 @@ body {
 	margin-bottom: 8px;
 	font-weight: 600;
 }
+.mode-bar {
+	display: flex;
+	gap: 8px;
+	margin: 8px 0 12px;
+}
 canvas#game {
-	background: linear-gradient(180deg, #0b1220, #111827);
+	background: linear-gradient(180deg, #091226 0%, #0b1328 60%, #0f172a 100%);
 	border: 2px solid #334155;
 	border-radius: 8px;
 	width: 100%;

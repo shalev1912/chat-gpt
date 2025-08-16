@@ -22,3 +22,8 @@
 2025-08-16T09:51:04Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveP256] connIndex=0 event=0 ip=198.41.200.33
 2025/08/16 09:51:04 failed to sufficiently increase receive buffer size (was: 208 kiB, wanted: 7168 kiB, got: 416 kiB). See https://github.com/quic-go/quic-go/wiki/UDP-Buffer-Sizes for details.
 2025-08-16T09:51:04Z INF Registered tunnel connection connIndex=0 connection=fbc94401-14c2-4d16-996e-3fdb583a05fe event=0 ip=198.41.200.33 location=pdx03 protocol=quic
+2025-08-16T10:11:38Z ERR Failed to serve tunnel connection error="context canceled" connIndex=0 event=0 ip=198.41.200.33
+2025-08-16T10:11:38Z INF Retrying connection in up to 1s connIndex=0 event=0 ip=198.41.200.33
+2025-08-16T10:11:38Z ERR Connection terminated error="context canceled" connIndex=0
+2025-08-16T10:11:57Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveP256] connIndex=0 event=0 ip=198.41.200.33
+2025-08-16T10:11:57Z INF Registered tunnel connection connIndex=0 connection=e64d125c-553f-4727-8da6-4593dcbde74e event=0 ip=198.41.200.33 location=pdx03 protocol=quic

@@ -11,11 +11,13 @@
 	const btnMulti = document.getElementById('btnMulti');
 	const btnLeft = document.getElementById('btnLeft');
 	const btnRight = document.getElementById('btnRight');
+	const modeBar = document.querySelector('.mode-bar');
 
 	let laneIndex = null; // 0 or 1 assigned by server
 	let latestState = null;
 	let isGameRunning = false;
 	let mode = null; // 'single' | 'multi'
+	let frameCount = 0; // animation tick
 
 	if (btnSingle) btnSingle.addEventListener('click', () => socket.emit('startSingle'));
 	if (btnMulti) btnMulti.addEventListener('click', () => socket.emit('startMultiplayer'));
@@ -51,10 +53,12 @@
 
 	socket.on('readyToChooseMode', () => {
 		statusEl.textContent = 'בחר מצב משחק';
+		if (modeBar) modeBar.style.display = 'flex';
 	});
 
 	socket.on('connect', () => {
 		statusEl.textContent = 'מחובר. בחר מצב משחק';
+		if (modeBar) modeBar.style.display = 'flex';
 	});
 
 	socket.on('waiting', (payload) => {
@@ -72,6 +76,7 @@
 		restartBtn.disabled = true;
 		isGameRunning = true;
 		mode = m || mode;
+		if (modeBar) modeBar.style.display = 'none';
 	});
 
 	socket.on('state', (snapshot) => {
@@ -88,17 +93,17 @@
 			if (winnerLane === -1) msg += ' | תיקו';
 			else if (winnerLane === laneIndex) msg += ' | ניצחת!';
 			else msg += ' | הפסדת';
-		} else {
-			msg += '';
 		}
 		statusEl.textContent = msg;
 		restartBtn.disabled = false;
+		if (modeBar) modeBar.style.display = 'flex';
 	});
 
 	socket.on('opponentDisconnected', () => {
 		isGameRunning = false;
 		statusEl.textContent = 'היריב התנתק. לחץ התחלה מחדש כדי לשחק שוב.';
 		restartBtn.disabled = false;
+		if (modeBar) modeBar.style.display = 'flex';
 	});
 
 	socket.on('playerReady', ({ readyCount }) => {
@@ -112,6 +117,7 @@
 		animationRequested = true;
 		window.requestAnimationFrame(() => {
 			animationRequested = false;
+			frameCount++;
 			render();
 		});
 	}
@@ -128,16 +134,14 @@
 		}
 
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
-		// background gradient already in CSS; draw tracks overlay
 		const laneWidth = canvas.width / s.numLanes;
 		const colWidth = laneWidth / s.colsPerTrack;
 
-		// draw lane backgrounds subtle
+		// lane backgrounds + separators
 		for (let lane = 0; lane < s.numLanes; lane += 1) {
 			const x0 = lane * laneWidth;
 			ctx.fillStyle = lane % 2 === 0 ? 'rgba(15,23,42,0.35)' : 'rgba(17,24,39,0.35)';
 			ctx.fillRect(x0, 0, laneWidth, canvas.height);
-			// draw columns separators
 			ctx.strokeStyle = 'rgba(148,163,184,0.2)';
 			ctx.lineWidth = 2;
 			for (let c = 1; c < s.colsPerTrack; c += 1) {
@@ -149,7 +153,7 @@
 			}
 		}
 
-		// scrolling dashed road lines inside each column for motion feel
+		// scrolling dashed road lines
 		roadScroll = (roadScroll + Math.max(2, Math.floor(s.speed / 60))) % 40;
 		ctx.strokeStyle = 'rgba(203,213,225,0.35)';
 		ctx.lineWidth = 4;
@@ -166,41 +170,120 @@
 		}
 		ctx.setLineDash([]);
 
-		// draw obstacles
+		// obstacles: draw cones/barrels with simple vector art
 		for (let laneIdx = 0; laneIdx < s.obstaclesByLane.length; laneIdx += 1) {
 			const obstacles = s.obstaclesByLane[laneIdx];
 			for (const ob of obstacles) {
 				const x = Math.round(laneIdx * laneWidth + ob.colIndex * colWidth + (colWidth - s.obstacleSize.w) / 2);
 				const y = ob.y;
-				// obstacle shadow
-				ctx.fillStyle = 'rgba(2,6,23,0.6)';
-				ctx.fillRect(x + 4, y + 6, s.obstacleSize.w, s.obstacleSize.h);
-				// obstacle body
-				const gradient = ctx.createLinearGradient(x, y, x, y + s.obstacleSize.h);
-				gradient.addColorStop(0, '#f59e0b');
-				gradient.addColorStop(1, '#b45309');
-				ctx.fillStyle = gradient;
-				ctx.fillRect(x, y, s.obstacleSize.w, s.obstacleSize.h);
-				// highlight
-				ctx.fillStyle = 'rgba(255,255,255,0.15)';
-				ctx.fillRect(x, y, s.obstacleSize.w, 6);
+				if (ob.type === 'barrel') drawBarrel(ctx, x, y, s.obstacleSize.w, s.obstacleSize.h);
+				else drawCone(ctx, x, y, s.obstacleSize.w, s.obstacleSize.h);
 			}
 		}
 
-		// draw players
+		// players: draw rounded car-like shape with subtle bobbing
 		for (const p of s.players) {
 			const x = Math.round(p.laneIndex * laneWidth + p.colIndex * colWidth + (colWidth - s.playerSize) / 2);
-			const y = s.playerY;
-			// player shadow
-			ctx.fillStyle = 'rgba(2,6,23,0.6)';
-			ctx.fillRect(x + 3, y + 8, s.playerSize, s.playerSize);
-			// player body
-			ctx.fillStyle = (laneIndex === p.laneIndex) ? '#22d3ee' : '#a78bfa';
-			ctx.fillRect(x, y, s.playerSize, s.playerSize);
-			if (!p.alive) {
-				ctx.fillStyle = 'rgba(239, 68, 68, 0.6)';
-				ctx.fillRect(x, y, s.playerSize, s.playerSize);
-			}
+			const baseY = s.playerY;
+			const bob = Math.round(Math.sin((frameCount + (laneIndex === p.laneIndex ? 0 : 20)) / 10) * 2);
+			const y = baseY + bob;
+			drawCar(ctx, x, y, s.playerSize, s.playerSize, laneIndex === p.laneIndex ? '#22d3ee' : '#a78bfa', !p.alive);
 		}
+	}
+
+	function drawCone(ctx, x, y, w, h) {
+		// shadow
+		ctx.fillStyle = 'rgba(2,6,23,0.55)';
+		ctx.fillRect(x + 4, y + h - 4, w, 6);
+		// base
+		ctx.fillStyle = '#ea580c';
+		ctx.beginPath();
+		ctx.moveTo(x + w * 0.1, y + h);
+		ctx.lineTo(x + w * 0.5, y);
+		ctx.lineTo(x + w * 0.9, y + h);
+		ctx.closePath();
+		ctx.fill();
+		// stripes
+		ctx.fillStyle = '#fde68a';
+		ctx.fillRect(x + w * 0.3, y + h * 0.55, w * 0.4, h * 0.1);
+		ctx.fillRect(x + w * 0.25, y + h * 0.75, w * 0.5, h * 0.1);
+	}
+
+	function drawBarrel(ctx, x, y, w, h) {
+		// shadow
+		ctx.fillStyle = 'rgba(2,6,23,0.55)';
+		ctx.fillRect(x + 4, y + h - 4, w, 6);
+		// body
+		const grd = ctx.createLinearGradient(x, y, x, y + h);
+		grd.addColorStop(0, '#6b7280');
+		grd.addColorStop(1, '#374151');
+		ctx.fillStyle = grd;
+		roundRect(ctx, x, y, w, h, 8);
+		ctx.fill();
+		// bands
+		ctx.fillStyle = 'rgba(31,41,55,0.7)';
+		ctx.fillRect(x, y + h * 0.3, w, 6);
+		ctx.fillRect(x, y + h * 0.6, w, 6);
+	}
+
+	function drawCar(ctx, x, y, w, h, color, isDead) {
+		// shadow
+		ctx.fillStyle = 'rgba(2,6,23,0.55)';
+		ctx.fillRect(x + 3, y + h - 2, w, 6);
+		// body
+		const body = ctx.createLinearGradient(x, y, x, y + h);
+		body.addColorStop(0, lighten(color, 0.15));
+		body.addColorStop(1, color);
+		ctx.fillStyle = body;
+		roundRect(ctx, x, y, w, h, 10);
+		ctx.fill();
+		// windshield
+		ctx.fillStyle = 'rgba(148,163,184,0.7)';
+		roundRect(ctx, x + w * 0.2, y + h * 0.15, w * 0.6, h * 0.25, 6);
+		ctx.fill();
+		// lights
+		ctx.fillStyle = '#fde68a';
+		ctx.fillRect(x + w * 0.1, y + h * 0.02, w * 0.2, 4);
+		ctx.fillRect(x + w * 0.7, y + h * 0.02, w * 0.2, 4);
+		// damage overlay
+		if (isDead) {
+			ctx.fillStyle = 'rgba(239,68,68,0.5)';
+			roundRect(ctx, x, y, w, h, 10);
+			ctx.fill();
+		}
+	}
+
+	function roundRect(ctx, x, y, w, h, r) {
+		ctx.beginPath();
+		ctx.moveTo(x + r, y);
+		ctx.lineTo(x + w - r, y);
+		ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+		ctx.lineTo(x + w, y + h - r);
+		ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+		ctx.lineTo(x + r, y + h);
+		ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+		ctx.lineTo(x, y + r);
+		ctx.quadraticCurveTo(x, y, x + r, y);
+		ctx.closePath();
+	}
+
+	function lighten(hex, amount) {
+		try {
+			const c = hexToRgb(hex);
+			c.r = Math.min(255, Math.round(c.r + 255 * amount));
+			c.g = Math.min(255, Math.round(c.g + 255 * amount));
+			c.b = Math.min(255, Math.round(c.b + 255 * amount));
+			return rgbToHex(c.r, c.g, c.b);
+		} catch {
+			return hex;
+		}
+	}
+	function hexToRgb(hex) {
+		hex = hex.replace('#', '');
+		const bigint = parseInt(hex, 16);
+		return { r: (bigint >> 16) & 255, g: (bigint >> 8) & 255, b: bigint & 255 };
+	}
+	function rgbToHex(r, g, b) {
+		return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
 	}
 })();

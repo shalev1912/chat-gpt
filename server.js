@@ -95,7 +95,8 @@ function randomBetween(min, max) {
 function spawnObstacle(room, laneIndex, nowMs) {
 	const colIndex = Math.floor(Math.random() * COLS_PER_TRACK);
 	const y = -OBSTACLE_HEIGHT; // spawn above the screen
-	room.obstaclesByLane[laneIndex].push({ y, colIndex });
+	const type = Math.random() < 0.5 ? 'cone' : 'barrel';
+	room.obstaclesByLane[laneIndex].push({ y, colIndex, type });
 	const { minInterval, maxInterval } = interpolateSpawns(room.elapsedMs);
 	room.spawnStateByLane[laneIndex].nextSpawnAtMs = nowMs + Math.round(randomBetween(minInterval, maxInterval));
 }

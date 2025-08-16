@@ -1,25 +1,29 @@
 <!doctype html>
-<html lang="he" dir="rtl">
+<html lang="ה" dir="rtl">
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<title>מירוץ מכשולים - 2 שחקנים</title>
+		<title>מירוץ מכשולים - אחד/שניים</title>
 		<link rel="stylesheet" href="/styles.css">
 	</head>
 	<body>
 		<div class="container">
 			<h1>מירוץ מכשולים</h1>
-			<div id="status">התחברות לשרת...</div>
+			<div class="mode-bar">
+				<button id="btnSingle">שחקן אחד</button>
+				<button id="btnMulti">שני שחקנים</button>
+			</div>
+			<div id="status">בחר מצב משחק</div>
 			<canvas id="game" width="900" height="500"></canvas>
 			<div class="hud">
-				<div>מהירות: <span id="speed">0</span> פיקסלים/שנייה</div>
-				<div>מרחק: <span id="distance">0</span> פיקסלים</div>
+				<div>מהירות: <span id="speed">0</span></div>
+				<div>מרחק: <span id="distance">0</span></div>
 			</div>
 			<div class="controls">
-				<p>שליטה: חיצים למעלה/למטה, או כפתורים/החלקה בנייד</p>
+				<p>שליטה (תצוגת על): חיצים שמאלה/ימינה, או כפתורים/החלקה בנייד</p>
 				<div id="mobileControls" class="mobile-controls" aria-hidden="false">
-					<button id="btnUp" class="big">למעלה ⬆️</button>
-					<button id="btnDown" class="big">למטה ⬇️</button>
+					<button id="btnLeft" class="big">שמאלה ⬅️</button>
+					<button id="btnRight" class="big">ימינה ➡️</button>
 				</div>
 				<button id="restart" disabled>התחל מחדש</button>
 			</div>

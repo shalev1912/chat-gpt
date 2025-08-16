@@ -15,45 +15,42 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-/**
- * Simple 2-player matchmaking with per-room authoritative game loop.
- */
-const TICK_RATE = 60; // Hz
+// Gameplay constants (top-down runner)
+const TICK_RATE = 60;
 const MS_PER_TICK = 1000 / TICK_RATE;
-const LANES_PER_PLAYER = 1; // conceptual; we have one lane per player
-const ROWS_PER_LANE = 3; // each lane has 3 rows
 
-const TRACK_PIXEL_LENGTH = 1000; // not visible, used for distance metrics
 const CANVAS_WIDTH = 900;
 const CANVAS_HEIGHT = 500;
 
-const PLAYER_X = 120; // x-position where player is fixed
-const PLAYER_SIZE = 40; // collision size
+const COLS_PER_TRACK = 3; // three columns per player's track
 
-const OBSTACLE_WIDTH = 40;
-const OBSTACLE_HEIGHT = 40;
+const PLAYER_SIZE = 44;
+const OBSTACLE_WIDTH = 44;
+const OBSTACLE_HEIGHT = 44;
 
-const BASE_SPEED = 260; // px/s initial
-const SPEED_GROWTH_PER_SEC = 18; // px/s^2, linear growth
-const MAX_SPEED = 650; // clamp
+const PLAYER_Y = CANVAS_HEIGHT - 100; // players near the bottom (fixed)
+
+const BASE_SPEED = 260; // px/s
+const SPEED_GROWTH_PER_SEC = 18; // px/s^2
+const MAX_SPEED = 650;
 
 const INITIAL_SPAWN_INTERVAL_MIN = 900; // ms
 const INITIAL_SPAWN_INTERVAL_MAX = 1300; // ms
 const MIN_SPAWN_INTERVAL_MIN = 550; // ms
 const MIN_SPAWN_INTERVAL_MAX = 900; // ms
-const SPAWN_EASE_DURATION_MS = 60000; // after 60s reach min interval
+const SPAWN_EASE_DURATION_MS = 60000; // reach min after 60s
 
-/**
- * Rooms state
- */
+// Rooms state
 const rooms = new Map(); // roomId -> RoomState
 let waitingSocketId = null;
 let nextRoomId = 1;
 
-function createEmptyRoom(id) {
+function createEmptyRoom(id, mode, numLanes) {
 	return {
 		id,
-		socketIds: [], // exactly 2 when playing
+		mode, // 'single' | 'multi'
+		numLanes, // 1 or 2
+		socketIds: [],
 		players: new Map(), // socketId -> PlayerState
 		gameStarted: false,
 		intervalHandle: null,
@@ -61,32 +58,23 @@ function createEmptyRoom(id) {
 		elapsedMs: 0,
 		speedPxPerSec: BASE_SPEED,
 		distancePx: 0,
-		obstaclesByLane: [[], []], // one array per player's lane
-		spawnStateByLane: [createSpawnState(), createSpawnState()],
+		obstaclesByLane: Array.from({ length: numLanes }, () => []), // [{ y, colIndex }]
+		spawnStateByLane: Array.from({ length: numLanes }, () => createSpawnState()),
 		readyForRestart: new Set()
 	};
 }
 
 function createSpawnState() {
-	return {
-		nextSpawnAtMs: 0
-	};
+	return { nextSpawnAtMs: 0 };
 }
 
 function createPlayer(socketId, laneIndex) {
 	return {
 		socketId,
-		laneIndex, // 0 or 1
-		rowIndex: 1, // 0 top, 1 middle, 2 bottom
+		laneIndex, // 0 or 1 within room
+		colIndex: 1, // 0 left, 1 middle, 2 right
 		alive: true
 	};
-}
-
-function laneRowToY(rowIndex) {
-	const trackTop = 60;
-	const trackHeight = CANVAS_HEIGHT - 120;
-	const rowHeight = trackHeight / ROWS_PER_LANE;
-	return Math.round(trackTop + rowHeight * rowIndex + (rowHeight - PLAYER_SIZE) / 2);
 }
 
 function clamp(value, min, max) {
@@ -94,7 +82,6 @@ function clamp(value, min, max) {
 }
 
 function interpolateSpawns(elapsedMs) {
-	// ease from initial to min intervals over SPAWN_EASE_DURATION_MS
 	const t = clamp(elapsedMs / SPAWN_EASE_DURATION_MS, 0, 1);
 	const minInterval = Math.round(INITIAL_SPAWN_INTERVAL_MIN * (1 - t) + MIN_SPAWN_INTERVAL_MIN * t);
 	const maxInterval = Math.round(INITIAL_SPAWN_INTERVAL_MAX * (1 - t) + MIN_SPAWN_INTERVAL_MAX * t);
@@ -106,9 +93,10 @@ function randomBetween(min, max) {
 }
 
 function spawnObstacle(room, laneIndex, nowMs) {
-	const rowIndex = Math.floor(Math.random() * ROWS_PER_LANE);
-	const x = CANVAS_WIDTH + OBSTACLE_WIDTH; // spawn off-screen right
-	room.obstaclesByLane[laneIndex].push({ x, rowIndex });
+	const colIndex = Math.floor(Math.random() * COLS_PER_TRACK);
+	const y = -OBSTACLE_HEIGHT; // spawn above the screen
+	const type = Math.random() < 0.5 ? 'cone' : 'barrel';
+	room.obstaclesByLane[laneIndex].push({ y, colIndex, type });
 	const { minInterval, maxInterval } = interpolateSpawns(room.elapsedMs);
 	room.spawnStateByLane[laneIndex].nextSpawnAtMs = nowMs + Math.round(randomBetween(minInterval, maxInterval));
 }
@@ -119,11 +107,11 @@ function resetGameState(room) {
 	room.elapsedMs = 0;
 	room.speedPxPerSec = BASE_SPEED;
 	room.distancePx = 0;
-	room.obstaclesByLane = [[], []];
-	room.spawnStateByLane = [createSpawnState(), createSpawnState()];
+	room.obstaclesByLane = Array.from({ length: room.numLanes }, () => []);
+	room.spawnStateByLane = Array.from({ length: room.numLanes }, () => createSpawnState());
 	room.readyForRestart.clear();
 	for (const player of room.players.values()) {
-		player.rowIndex = 1;
+		player.colIndex = 1;
 		player.alive = true;
 	}
 }
@@ -154,14 +142,13 @@ function tickRoom(room) {
 	const elapsedSec = room.elapsedMs / 1000;
 	room.speedPxPerSec = clamp(BASE_SPEED + SPEED_GROWTH_PER_SEC * elapsedSec, BASE_SPEED, MAX_SPEED);
 
-	const dx = (room.speedPxPerSec * dtMs) / 1000;
-	room.distancePx += dx;
+	const dy = (room.speedPxPerSec * dtMs) / 1000;
+	room.distancePx += dy;
 
-	// spawn obstacles if needed
-	for (let laneIndex = 0; laneIndex < 2; laneIndex += 1) {
+	// spawn obstacles per lane
+	for (let laneIndex = 0; laneIndex < room.numLanes; laneIndex += 1) {
 		const spawnState = room.spawnStateByLane[laneIndex];
 		if (spawnState.nextSpawnAtMs === 0) {
-			// first spawn per lane after a short delay
 			const { minInterval, maxInterval } = interpolateSpawns(room.elapsedMs);
 			spawnState.nextSpawnAtMs = now + Math.round(randomBetween(minInterval, maxInterval));
 		}
@@ -170,14 +157,13 @@ function tickRoom(room) {
 		}
 	}
 
-	// move obstacles and check collisions
-	for (let laneIndex = 0; laneIndex < 2; laneIndex += 1) {
+	// move obstacles and remove out-of-bounds
+	for (let laneIndex = 0; laneIndex < room.numLanes; laneIndex += 1) {
 		const obstacles = room.obstaclesByLane[laneIndex];
 		for (const obstacle of obstacles) {
-			obstacle.x -= dx;
+			obstacle.y += dy;
 		}
-		// remove obstacles that passed left edge
-		while (obstacles.length > 0 && obstacles[0].x < -OBSTACLE_WIDTH - 10) {
+		while (obstacles.length > 0 && obstacles[0].y > CANVAS_HEIGHT + OBSTACLE_HEIGHT + 10) {
 			obstacles.shift();
 		}
 	}
@@ -187,11 +173,20 @@ function tickRoom(room) {
 	for (const player of players) {
 		if (!player.alive) continue;
 		const laneIndex = player.laneIndex;
-		const y = laneRowToY(player.rowIndex);
-		const playerRect = { x: PLAYER_X, y, w: PLAYER_SIZE, h: PLAYER_SIZE };
+		const playerRect = {
+			x: colIndexToX(room, laneIndex, player.colIndex, PLAYER_SIZE),
+			y: PLAYER_Y,
+			w: PLAYER_SIZE,
+			h: PLAYER_SIZE
+		};
 		const obstacles = room.obstaclesByLane[laneIndex];
 		for (const obstacle of obstacles) {
-			const obstacleRect = { x: obstacle.x, y: laneRowToY(obstacle.rowIndex), w: OBSTACLE_WIDTH, h: OBSTACLE_HEIGHT };
+			const obstacleRect = {
+				x: colIndexToX(room, laneIndex, obstacle.colIndex, OBSTACLE_WIDTH),
+				y: obstacle.y,
+				w: OBSTACLE_WIDTH,
+				h: OBSTACLE_HEIGHT
+			};
 			if (rectsOverlap(playerRect, obstacleRect)) {
 				player.alive = false;
 				break;
@@ -201,26 +196,33 @@ function tickRoom(room) {
 
 	const alivePlayers = players.filter(p => p.alive);
 	if (alivePlayers.length < players.length && room.gameStarted) {
-		// at least one died -> end game
+		// end game when any player dies
 		stopGameLoop(room);
 		let winnerLane = null;
-		if (players[0] && players[1]) {
+		if (room.mode === 'multi' && players.length === 2) {
 			if (players[0].alive && !players[1].alive) winnerLane = players[0].laneIndex;
 			else if (!players[0].alive && players[1].alive) winnerLane = players[1].laneIndex;
 			else winnerLane = -1; // tie
+		} else {
+			winnerLane = alivePlayers.length === 1 ? alivePlayers[0].laneIndex : -1;
 		}
-		const payload = {
+		io.to(room.id).emit('gameOver', {
 			distance: Math.round(room.distancePx),
 			speed: Math.round(room.speedPxPerSec),
 			winnerLane
-		};
-		io.to(room.id).emit('gameOver', payload);
-		return; // do not emit state after game over
+		});
+		return;
 	}
 
-	// broadcast state snapshot
-	const snapshot = buildSnapshot(room);
-	io.to(room.id).emit('state', snapshot);
+	// broadcast state
+	io.to(room.id).emit('state', buildSnapshot(room));
+}
+
+function colIndexToX(room, laneIndex, colIndex, widthPx) {
+	const laneWidth = CANVAS_WIDTH / room.numLanes;
+	const colWidth = laneWidth / COLS_PER_TRACK;
+	const trackOffset = laneIndex * laneWidth;
+	return Math.round(trackOffset + colIndex * colWidth + (colWidth - widthPx) / 2);
 }
 
 function rectsOverlap(a, b) {
@@ -230,15 +232,16 @@ function rectsOverlap(a, b) {
 function buildSnapshot(room) {
 	const players = Array.from(room.players.values()).map(p => ({
 		laneIndex: p.laneIndex,
-		rowIndex: p.rowIndex,
+		colIndex: p.colIndex,
 		alive: p.alive
 	}));
 	return {
 		canvas: { width: CANVAS_WIDTH, height: CANVAS_HEIGHT },
-		playerX: PLAYER_X,
+		playerY: PLAYER_Y,
 		playerSize: PLAYER_SIZE,
 		obstacleSize: { w: OBSTACLE_WIDTH, h: OBSTACLE_HEIGHT },
-		rowsPerLane: ROWS_PER_LANE,
+		colsPerTrack: COLS_PER_TRACK,
+		numLanes: room.numLanes,
 		obstaclesByLane: room.obstaclesByLane,
 		players,
 		speed: Math.round(room.speedPxPerSec),
@@ -248,40 +251,55 @@ function buildSnapshot(room) {
 }
 
 io.on('connection', (socket) => {
-	// matchmaking: pair with waiting player or wait
-	let assignedRoom = null;
-	if (waitingSocketId && waitingSocketId !== socket.id) {
+	// wait for client to choose mode
+	socket.emit('readyToChooseMode');
+
+	socket.on('startSingle', () => {
+		if (findRoomBySocket(socket.id)) return; // already in a room
+		if (waitingSocketId === socket.id) waitingSocketId = null;
 		const roomId = String(nextRoomId++);
-		const room = createEmptyRoom(roomId);
+		const room = createEmptyRoom(roomId, 'single', 1);
 		rooms.set(roomId, room);
 
-		room.socketIds.push(waitingSocketId);
 		room.socketIds.push(socket.id);
-
-		const laneA = 0;
-		const laneB = 1;
-
-		room.players.set(waitingSocketId, createPlayer(waitingSocketId, laneA));
-		room.players.set(socket.id, createPlayer(socket.id, laneB));
+		room.players.set(socket.id, createPlayer(socket.id, 0));
 
 		socket.join(roomId);
-		io.sockets.sockets.get(waitingSocketId)?.join(roomId);
-
-		assignedRoom = room;
-		waitingSocketId = null;
-
-		// notify both
-		for (const sid of room.socketIds) {
-			io.to(sid).emit('matchFound', { roomId, laneIndex: room.players.get(sid).laneIndex });
-		}
-
+		io.to(socket.id).emit('matchFound', { roomId, laneIndex: 0, mode: 'single' });
 		resetGameState(room);
 		startGameLoop(room);
-		io.to(roomId).emit('gameStart', { roomId });
-	} else {
-		waitingSocketId = socket.id;
-		socket.emit('waiting', { message: 'Waiting for another player to join...' });
-	}
+		io.to(roomId).emit('gameStart', { roomId, mode: 'single' });
+	});
+
+	socket.on('startMultiplayer', () => {
+		if (findRoomBySocket(socket.id)) return; // already in a room
+		if (waitingSocketId && waitingSocketId !== socket.id) {
+			const roomId = String(nextRoomId++);
+			const room = createEmptyRoom(roomId, 'multi', 2);
+			rooms.set(roomId, room);
+
+			room.socketIds.push(waitingSocketId);
+			room.socketIds.push(socket.id);
+
+			room.players.set(waitingSocketId, createPlayer(waitingSocketId, 0));
+			room.players.set(socket.id, createPlayer(socket.id, 1));
+
+			io.sockets.sockets.get(waitingSocketId)?.join(roomId);
+			socket.join(roomId);
+
+			for (const sid of room.socketIds) {
+				io.to(sid).emit('matchFound', { roomId, laneIndex: room.players.get(sid).laneIndex, mode: 'multi' });
+			}
+			waitingSocketId = null;
+
+			resetGameState(room);
+			startGameLoop(room);
+			io.to(roomId).emit('gameStart', { roomId, mode: 'multi' });
+		} else {
+			waitingSocketId = socket.id;
+			socket.emit('waiting', { message: 'ממתין לשחקן נוסף...' });
+		}
+	});
 
 	socket.on('input', (payload) => {
 		const room = findRoomBySocket(socket.id);
@@ -289,10 +307,10 @@ io.on('connection', (socket) => {
 		const player = room.players.get(socket.id);
 		if (!player || !player.alive) return;
 		if (payload?.type === 'move') {
-			if (payload.direction === 'up') {
-				player.rowIndex = clamp(player.rowIndex - 1, 0, ROWS_PER_LANE - 1);
-			} else if (payload.direction === 'down') {
-				player.rowIndex = clamp(player.rowIndex + 1, 0, ROWS_PER_LANE - 1);
+			if (payload.direction === 'left') {
+				player.colIndex = clamp(player.colIndex - 1, 0, COLS_PER_TRACK - 1);
+			} else if (payload.direction === 'right') {
+				player.colIndex = clamp(player.colIndex + 1, 0, COLS_PER_TRACK - 1);
 			}
 		}
 	});
@@ -302,10 +320,10 @@ io.on('connection', (socket) => {
 		if (!room) return;
 		room.readyForRestart.add(socket.id);
 		io.to(room.id).emit('playerReady', { socketId: socket.id, readyCount: room.readyForRestart.size });
-		if (room.readyForRestart.size === room.socketIds.length && room.socketIds.length === 2) {
+		if (room.readyForRestart.size === room.socketIds.length) {
 			resetGameState(room);
 			startGameLoop(room);
-			io.to(room.id).emit('gameStart', { roomId: room.id });
+			io.to(room.id).emit('gameStart', { roomId: room.id, mode: room.mode });
 		}
 	});
 
@@ -316,17 +334,13 @@ io.on('connection', (socket) => {
 		}
 		const room = findRoomBySocket(socket.id);
 		if (!room) return;
-		// remove from room
 		room.socketIds = room.socketIds.filter((sid) => sid !== socket.id);
 		room.players.delete(socket.id);
 
-		// if game running and opponent exists, opponent wins immediately
-		if (room.gameStarted && room.socketIds.length === 1) {
+		if (room.gameStarted && room.socketIds.length > 0) {
 			stopGameLoop(room);
 			io.to(room.id).emit('opponentDisconnected');
 		}
-
-		// clean up room if empty
 		if (room.socketIds.length === 0) {
 			stopGameLoop(room);
 			rooms.delete(room.id);

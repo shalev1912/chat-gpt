@@ -7,83 +7,76 @@
 	const speedEl = document.getElementById('speed');
 	const distanceEl = document.getElementById('distance');
 	const restartBtn = document.getElementById('restart');
-	const btnUp = document.getElementById('btnUp');
-	const btnDown = document.getElementById('btnDown');
+	const btnSingle = document.getElementById('btnSingle');
+	const btnMulti = document.getElementById('btnMulti');
+	const btnLeft = document.getElementById('btnLeft');
+	const btnRight = document.getElementById('btnRight');
+	const modeBar = document.querySelector('.mode-bar');
 
 	let laneIndex = null; // 0 or 1 assigned by server
 	let latestState = null;
 	let isGameRunning = false;
-	let isWaiting = false;
+	let mode = null; // 'single' | 'multi'
+	let frameCount = 0; // animation tick
+
+	if (btnSingle) btnSingle.addEventListener('click', () => socket.emit('startSingle'));
+	if (btnMulti) btnMulti.addEventListener('click', () => socket.emit('startMultiplayer'));
 
 	restartBtn.addEventListener('click', () => {
 		restartBtn.disabled = true;
 		socket.emit('requestRestart');
 	});
 
-	if (btnUp) {
-		btnUp.addEventListener('click', () => {
-			if (!isGameRunning) return;
-			socket.emit('input', { type: 'move', direction: 'up' });
-		});
-	}
-	if (btnDown) {
-		btnDown.addEventListener('click', () => {
-			if (!isGameRunning) return;
-			socket.emit('input', { type: 'move', direction: 'down' });
-		});
-	}
+	if (btnLeft) btnLeft.addEventListener('click', () => { if (isGameRunning) socket.emit('input', { type: 'move', direction: 'left' }); });
+	if (btnRight) btnRight.addEventListener('click', () => { if (isGameRunning) socket.emit('input', { type: 'move', direction: 'right' }); });
 
-	let touchStartY = null;
+	let touchStartX = null;
 	canvas.addEventListener('touchstart', (e) => {
 		if (!isGameRunning) return;
-		if (e.touches && e.touches.length > 0) {
-			touchStartY = e.touches[0].clientY;
-		}
+		if (e.touches && e.touches.length > 0) touchStartX = e.touches[0].clientX;
 	}, { passive: true });
 	canvas.addEventListener('touchend', (e) => {
-		if (!isGameRunning) return;
-		if (touchStartY == null) return;
-		const t = e.changedTouches && e.changedTouches[0] ? e.changedTouches[0] : (e.touches && e.touches[0] ? e.touches[0] : null);
+		if (!isGameRunning || touchStartX == null) return;
+		const t = e.changedTouches && e.changedTouches[0] ? e.changedTouches[0] : null;
 		if (!t) return;
-		const dy = t.clientY - touchStartY;
-		const THRESHOLD = 25;
-		if (Math.abs(dy) >= THRESHOLD) {
-			const dir = dy < 0 ? 'up' : 'down';
-			socket.emit('input', { type: 'move', direction: dir });
-		}
-		touchStartY = null;
+		const dx = t.clientX - touchStartX;
+		const TH = 25;
+		if (Math.abs(dx) >= TH) socket.emit('input', { type: 'move', direction: dx < 0 ? 'left' : 'right' });
+		touchStartX = null;
 	}, { passive: true });
 
 	document.addEventListener('keydown', (e) => {
 		if (!isGameRunning) return;
-		if (e.key === 'ArrowUp') {
-			socket.emit('input', { type: 'move', direction: 'up' });
-			e.preventDefault();
-		} else if (e.key === 'ArrowDown') {
-			socket.emit('input', { type: 'move', direction: 'down' });
-			e.preventDefault();
-		}
+		if (e.key === 'ArrowLeft') { socket.emit('input', { type: 'move', direction: 'left' }); e.preventDefault(); }
+		else if (e.key === 'ArrowRight') { socket.emit('input', { type: 'move', direction: 'right' }); e.preventDefault(); }
+	});
+
+	socket.on('readyToChooseMode', () => {
+		statusEl.textContent = 'בחר מצב משחק';
+		if (modeBar) modeBar.style.display = 'flex';
 	});
 
 	socket.on('connect', () => {
-		statusEl.textContent = 'מחובר. מחפש יריב...';
+		statusEl.textContent = 'מחובר. בחר מצב משחק';
+		if (modeBar) modeBar.style.display = 'flex';
 	});
 
 	socket.on('waiting', (payload) => {
 		statusEl.textContent = payload?.message || 'ממתין לשחקן נוסף...';
-		isWaiting = true;
 	});
 
-	socket.on('matchFound', ({ roomId, laneIndex: myLane }) => {
+	socket.on('matchFound', ({ roomId, laneIndex: myLane, mode: m }) => {
 		laneIndex = myLane;
-		statusEl.textContent = `נמצא משחק בחדר ${roomId}. המסלול שלך: ${laneIndex === 0 ? 'שמאלי' : 'ימני'}`;
-		isWaiting = false;
+		mode = m;
+		statusEl.textContent = m === 'single' ? 'מצב שחקן אחד התחיל' : `נמצא משחק בחדר ${roomId}. המסלול שלך: ${laneIndex === 0 ? 'שמאלי' : 'ימני'}`;
 	});
 
-	socket.on('gameStart', () => {
+	socket.on('gameStart', ({ mode: m }) => {
 		statusEl.textContent = 'המשחק התחיל!';
 		restartBtn.disabled = true;
 		isGameRunning = true;
+		mode = m || mode;
+		if (modeBar) modeBar.style.display = 'none';
 	});
 
 	socket.on('state', (snapshot) => {
@@ -96,29 +89,35 @@
 	socket.on('gameOver', ({ distance, speed, winnerLane }) => {
 		isGameRunning = false;
 		let msg = `סיום! מרחק: ${distance}, מהירות: ${speed}`;
-		if (winnerLane === -1) msg += ' | תיקו';
-		else if (winnerLane === laneIndex) msg += ' | ניצחת!';
-		else msg += ' | הפסדת';
+		if (mode === 'multi') {
+			if (winnerLane === -1) msg += ' | תיקו';
+			else if (winnerLane === laneIndex) msg += ' | ניצחת!';
+			else msg += ' | הפסדת';
+		}
 		statusEl.textContent = msg;
 		restartBtn.disabled = false;
+		if (modeBar) modeBar.style.display = 'flex';
 	});
 
 	socket.on('opponentDisconnected', () => {
 		isGameRunning = false;
-		statusEl.textContent = 'היריב התנתק. לחץ התחלה מחדש כדי לחכות ליריב חדש.';
+		statusEl.textContent = 'היריב התנתק. לחץ התחלה מחדש כדי לשחק שוב.';
 		restartBtn.disabled = false;
+		if (modeBar) modeBar.style.display = 'flex';
 	});
 
 	socket.on('playerReady', ({ readyCount }) => {
-		statusEl.textContent = `המתן... ${readyCount}/2 מוכנים`;
+		statusEl.textContent = mode === 'multi' ? `המתן... ${readyCount}/2 מוכנים` : 'מוכן להתחלה';
 	});
 
 	let animationRequested = false;
+	let roadScroll = 0; // for lane line animation
 	function requestRender() {
 		if (animationRequested) return;
 		animationRequested = true;
 		window.requestAnimationFrame(() => {
 			animationRequested = false;
+			frameCount++;
 			render();
 		});
 	}
@@ -129,81 +128,162 @@
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
 			return;
 		}
-		// ensure canvas matches server size
 		if (canvas.width !== s.canvas.width || canvas.height !== s.canvas.height) {
 			canvas.width = s.canvas.width;
 			canvas.height = s.canvas.height;
 		}
 
-		// background
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
-		ctx.fillStyle = '#0b1220';
-		ctx.fillRect(0, 0, canvas.width, canvas.height);
+		const laneWidth = canvas.width / s.numLanes;
+		const colWidth = laneWidth / s.colsPerTrack;
 
-		// draw lanes background
-		const laneWidth = canvas.width / 2;
-		// left (lane 0)
-		ctx.fillStyle = '#0f1a2a';
-		ctx.fillRect(0, 0, laneWidth, canvas.height);
-		// right (lane 1)
-		ctx.fillStyle = '#0d1625';
-		ctx.fillRect(laneWidth, 0, laneWidth, canvas.height);
-
-		// draw rows separators
-		const trackTop = 60;
-		const trackBottom = canvas.height - 60;
-		const trackHeight = trackBottom - trackTop;
-		const rowHeight = trackHeight / s.rowsPerLane;
-		ctx.strokeStyle = '#1f2a3a';
-		ctx.lineWidth = 2;
-		for (let i = 1; i < s.rowsPerLane; i += 1) {
-			const y = Math.round(trackTop + rowHeight * i);
-			ctx.beginPath();
-			ctx.moveTo(16, y);
-			ctx.lineTo(canvas.width - 16, y);
-			ctx.stroke();
-		}
-
-		// center divider
-		ctx.strokeStyle = '#243449';
-		ctx.setLineDash([10, 10]);
-		ctx.beginPath();
-		ctx.moveTo(laneWidth, 16);
-		ctx.lineTo(laneWidth, canvas.height - 16);
-		ctx.stroke();
-		ctx.setLineDash([]);
-
-		// draw players
-		for (const p of s.players) {
-			const isMe = laneIndex === p.laneIndex;
-			const x = s.playerX + (p.laneIndex === 1 ? laneWidth : 0);
-			const y = rowIndexToY(p.rowIndex, s);
-			ctx.fillStyle = isMe ? '#22d3ee' : '#a78bfa';
-			ctx.fillRect(x, y, s.playerSize, s.playerSize);
-			if (!p.alive) {
-				ctx.fillStyle = 'rgba(239, 68, 68, 0.6)';
-				ctx.fillRect(x, y, s.playerSize, s.playerSize);
+		// lane backgrounds + separators
+		for (let lane = 0; lane < s.numLanes; lane += 1) {
+			const x0 = lane * laneWidth;
+			ctx.fillStyle = lane % 2 === 0 ? 'rgba(15,23,42,0.35)' : 'rgba(17,24,39,0.35)';
+			ctx.fillRect(x0, 0, laneWidth, canvas.height);
+			ctx.strokeStyle = 'rgba(148,163,184,0.2)';
+			ctx.lineWidth = 2;
+			for (let c = 1; c < s.colsPerTrack; c += 1) {
+				const x = Math.round(x0 + c * colWidth);
+				ctx.beginPath();
+				ctx.moveTo(x, 12);
+				ctx.lineTo(x, canvas.height - 12);
+				ctx.stroke();
 			}
 		}
 
-		// draw obstacles
+		// scrolling dashed road lines
+		roadScroll = (roadScroll + Math.max(2, Math.floor(s.speed / 60))) % 40;
+		ctx.strokeStyle = 'rgba(203,213,225,0.35)';
+		ctx.lineWidth = 4;
+		ctx.setLineDash([16, 16]);
+		for (let lane = 0; lane < s.numLanes; lane += 1) {
+			const x0 = lane * laneWidth;
+			for (let c = 0; c < s.colsPerTrack; c += 1) {
+				const cx = Math.round(x0 + c * colWidth + colWidth / 2);
+				ctx.beginPath();
+				ctx.moveTo(cx, -40 + roadScroll);
+				ctx.lineTo(cx, canvas.height + 40 + roadScroll);
+				ctx.stroke();
+			}
+		}
+		ctx.setLineDash([]);
+
+		// obstacles: draw cones/barrels with simple vector art
 		for (let laneIdx = 0; laneIdx < s.obstaclesByLane.length; laneIdx += 1) {
 			const obstacles = s.obstaclesByLane[laneIdx];
 			for (const ob of obstacles) {
-				const x = ob.x + (laneIdx === 1 ? laneWidth : 0);
-				const y = rowIndexToY(ob.rowIndex, s);
-				ctx.fillStyle = '#f59e0b';
-				ctx.fillRect(x, y, s.obstacleSize.w, s.obstacleSize.h);
+				const x = Math.round(laneIdx * laneWidth + ob.colIndex * colWidth + (colWidth - s.obstacleSize.w) / 2);
+				const y = ob.y;
+				if (ob.type === 'barrel') drawBarrel(ctx, x, y, s.obstacleSize.w, s.obstacleSize.h);
+				else drawCone(ctx, x, y, s.obstacleSize.w, s.obstacleSize.h);
 			}
 		}
 
-		// speed and distance are updated in HUD elements
+		// players: draw rounded car-like shape with subtle bobbing
+		for (const p of s.players) {
+			const x = Math.round(p.laneIndex * laneWidth + p.colIndex * colWidth + (colWidth - s.playerSize) / 2);
+			const baseY = s.playerY;
+			const bob = Math.round(Math.sin((frameCount + (laneIndex === p.laneIndex ? 0 : 20)) / 10) * 2);
+			const y = baseY + bob;
+			drawCar(ctx, x, y, s.playerSize, s.playerSize, laneIndex === p.laneIndex ? '#22d3ee' : '#a78bfa', !p.alive);
+		}
 	}
 
-	function rowIndexToY(rowIndex, s) {
-		const trackTop = 60;
-		const trackHeight = s.canvas.height - 120;
-		const rowHeight = trackHeight / s.rowsPerLane;
-		return Math.round(trackTop + rowHeight * rowIndex + (rowHeight - s.playerSize) / 2);
+	function drawCone(ctx, x, y, w, h) {
+		// shadow
+		ctx.fillStyle = 'rgba(2,6,23,0.55)';
+		ctx.fillRect(x + 4, y + h - 4, w, 6);
+		// base
+		ctx.fillStyle = '#ea580c';
+		ctx.beginPath();
+		ctx.moveTo(x + w * 0.1, y + h);
+		ctx.lineTo(x + w * 0.5, y);
+		ctx.lineTo(x + w * 0.9, y + h);
+		ctx.closePath();
+		ctx.fill();
+		// stripes
+		ctx.fillStyle = '#fde68a';
+		ctx.fillRect(x + w * 0.3, y + h * 0.55, w * 0.4, h * 0.1);
+		ctx.fillRect(x + w * 0.25, y + h * 0.75, w * 0.5, h * 0.1);
+	}
+
+	function drawBarrel(ctx, x, y, w, h) {
+		// shadow
+		ctx.fillStyle = 'rgba(2,6,23,0.55)';
+		ctx.fillRect(x + 4, y + h - 4, w, 6);
+		// body
+		const grd = ctx.createLinearGradient(x, y, x, y + h);
+		grd.addColorStop(0, '#6b7280');
+		grd.addColorStop(1, '#374151');
+		ctx.fillStyle = grd;
+		roundRect(ctx, x, y, w, h, 8);
+		ctx.fill();
+		// bands
+		ctx.fillStyle = 'rgba(31,41,55,0.7)';
+		ctx.fillRect(x, y + h * 0.3, w, 6);
+		ctx.fillRect(x, y + h * 0.6, w, 6);
+	}
+
+	function drawCar(ctx, x, y, w, h, color, isDead) {
+		// shadow
+		ctx.fillStyle = 'rgba(2,6,23,0.55)';
+		ctx.fillRect(x + 3, y + h - 2, w, 6);
+		// body
+		const body = ctx.createLinearGradient(x, y, x, y + h);
+		body.addColorStop(0, lighten(color, 0.15));
+		body.addColorStop(1, color);
+		ctx.fillStyle = body;
+		roundRect(ctx, x, y, w, h, 10);
+		ctx.fill();
+		// windshield
+		ctx.fillStyle = 'rgba(148,163,184,0.7)';
+		roundRect(ctx, x + w * 0.2, y + h * 0.15, w * 0.6, h * 0.25, 6);
+		ctx.fill();
+		// lights
+		ctx.fillStyle = '#fde68a';
+		ctx.fillRect(x + w * 0.1, y + h * 0.02, w * 0.2, 4);
+		ctx.fillRect(x + w * 0.7, y + h * 0.02, w * 0.2, 4);
+		// damage overlay
+		if (isDead) {
+			ctx.fillStyle = 'rgba(239,68,68,0.5)';
+			roundRect(ctx, x, y, w, h, 10);
+			ctx.fill();
+		}
+	}
+
+	function roundRect(ctx, x, y, w, h, r) {
+		ctx.beginPath();
+		ctx.moveTo(x + r, y);
+		ctx.lineTo(x + w - r, y);
+		ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+		ctx.lineTo(x + w, y + h - r);
+		ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+		ctx.lineTo(x + r, y + h);
+		ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+		ctx.lineTo(x, y + r);
+		ctx.quadraticCurveTo(x, y, x + r, y);
+		ctx.closePath();
+	}
+
+	function lighten(hex, amount) {
+		try {
+			const c = hexToRgb(hex);
+			c.r = Math.min(255, Math.round(c.r + 255 * amount));
+			c.g = Math.min(255, Math.round(c.g + 255 * amount));
+			c.b = Math.min(255, Math.round(c.b + 255 * amount));
+			return rgbToHex(c.r, c.g, c.b);
+		} catch {
+			return hex;
+		}
+	}
+	function hexToRgb(hex) {
+		hex = hex.replace('#', '');
+		const bigint = parseInt(hex, 16);
+		return { r: (bigint >> 16) & 255, g: (bigint >> 8) & 255, b: bigint & 255 };
+	}
+	function rgbToHex(r, g, b) {
+		return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
 	}
 })();

@@ -63,11 +63,11 @@
   .coin{ background:linear-gradient(90deg,#ffd166,#ffb347); color:#111; padding:6px 10px; border-radius:8px; font-weight:700; box-shadow:0 6px 18px rgba(255,177,71,0.12) }
 
   /* shop modal */
-  .modal-backdrop { position:fixed; inset:0; background:rgba(2,6,23,0.7); display:flex; align-items:center; justify-content:center; z-index:60; }
-  .modal { width:92%; max-width:760px; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:14px; padding:18px; border:1px solid rgba(124,255,234,0.06); box-shadow:0 30px 80px rgba(2,8,23,0.7); }
+  .modal-backdrop { position:fixed; inset:0; background:rgba(2,6,23,0.88); display:flex; align-items:center; justify-content:center; z-index:60; backdrop-filter: blur(6px); }
+  .modal { width:92%; max-width:760px; background:#0f1724; border-radius:14px; padding:18px; border:1px solid rgba(124,255,234,0.12); box-shadow:0 30px 80px rgba(2,8,23,0.8); }
   .modal h3{ margin:0 0 8px 0; font-size:18px }
   .shop-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:12px }
-  .shop-item{ background:rgba(255,255,255,0.02); padding:12px; border-radius:10px; display:flex; flex-direction:column; gap:8px; border:1px solid rgba(255,255,255,0.02) }
+  .shop-item{ background:rgba(255,255,255,0.03); padding:12px; border-radius:10px; display:flex; flex-direction:column; gap:8px; border:1px solid rgba(255,255,255,0.06) }
   .shop-item h4{ margin:0; font-size:16px }
   .shop-item small{ color:rgba(230,243,241,0.7) }
   .shop-item .buy-row{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:6px }
@@ -396,6 +396,14 @@ shopBtn.addEventListener('click', () => {
 closeShopBtn.addEventListener('click', () => {
   shopModal.classList.add('hidden');
   shopModal.setAttribute('aria-hidden','true');
+});
+
+// סגירה בלחיצה מחוץ למודל (על הרקע)
+shopModal.addEventListener('click', (e) => {
+  if (e.target === shopModal) {
+    shopModal.classList.add('hidden');
+    shopModal.setAttribute('aria-hidden','true');
+  }
 });
 
 /* ====== התחלת UI ====== */

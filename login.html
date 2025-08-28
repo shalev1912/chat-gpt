@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GameWorld - Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-700 via-purple-700 to-pink-600">
+
+  <div class="bg-white/90 p-8 rounded-2xl shadow-2xl w-[360px]">
+    <h1 class="text-3xl font-bold text-center text-purple-700 mb-6">GameWorld</h1>
+
+    <form id="authForm" class="space-y-4">
+      <input type="email" id="email" placeholder="Email" required
+        class="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-purple-500">
+      
+      <input type="password" id="password" placeholder="Password" required
+        class="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-purple-500">
+
+      <button type="submit"
+        class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 rounded-xl">
+        Login
+      </button>
+    </form>
+
+    <p class="text-center text-sm mt-4 text-gray-700">
+      <span id="toggleText">Don't have an account?</span>
+      <button id="toggleBtn" class="ml-2 text-purple-600 font-semibold hover:underline">
+        Register
+      </button>
+    </p>
+  </div>
+
+  <script>
+    const API_URL = "https://app-quiet-butterfly-34696525.dpl.myneon.app";
+    let isLogin = true;
+
+    const form = document.getElementById("authForm");
+    const toggleBtn = document.getElementById("toggleBtn");
+    const toggleText = document.getElementById("toggleText");
+
+    toggleBtn.addEventListener("click", () => {
+      isLogin = !isLogin;
+      form.querySelector("button").innerText = isLogin ? "Login" : "Register";
+      toggleText.innerText = isLogin
+        ? "Don't have an account?"
+        : "Already have an account?";
+      toggleBtn.innerText = isLogin ? "Register" : "Login";
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      try {
+        const endpoint = isLogin ? "/login" : "/register";
+        const res = await fetch(API_URL + endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+
+        if (!res.ok) throw new Error("Auth failed");
+
+        const data = await res.json();
+        localStorage.setItem("token", data.token);
+
+        // אחרי התחברות מוצלחת → מעבר לעמוד הראשי
+        window.location.href = "https://shalev1912.github.io/chat-gpt/home.html";
+      } catch (err) {
+        alert("❌ התחברות/הרשמה נכשלה");
+      }
+    });
+  </script>
+</body>
+</html>

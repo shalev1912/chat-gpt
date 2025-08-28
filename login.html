@@ -33,7 +33,7 @@
   </div>
 
   <script>
-    const API_URL = "https://app-quiet-butterfly-34696525.dpl.myneon.app";
+    const API_URL = "https://my-game-server.neon.app";
     let isLogin = true;
 
     // ✅ אם המשתמש כבר מחובר → נשלח ל-home.html
@@ -67,15 +67,19 @@
           body: JSON.stringify({ email, password }),
         });
 
-        if (!res.ok) throw new Error("Auth failed");
-
         const data = await res.json();
+
+        if (!res.ok) {
+          console.error("Server error:", data);
+          throw new Error(data.message || "Auth failed");
+        }
+
         localStorage.setItem("token", data.token);
 
         // ✅ אחרי התחברות מוצלחת → מעבר לעמוד הראשי
         window.location.href = "https://shalev1912.github.io/chat-gpt/home.html";
       } catch (err) {
-        alert("❌ התחברות/הרשמה נכשלה");
+        alert("❌ התחברות/הרשמה נכשלה: " + err.message);
       }
     });
   </script>

@@ -1,114 +1,90 @@
 <!DOCTYPE html>
-<html lang="he">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login / Register</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f9;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .container {
-      background: white;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      width: 300px;
-      text-align: center;
-    }
-    input {
-      width: 100%;
-      padding: 10px;
-      margin: 8px 0;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-    button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      border: none;
-      border-radius: 6px;
-      background: #4caf50;
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #45a049;
-    }
-    .toggle {
-      margin-top: 12px;
-      font-size: 14px;
-      cursor: pointer;
-      color: #007BFF;
-    }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GameWorld - Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <div class="container">
-    <h2 id="form-title">התחברות</h2>
-    <input type="email" id="email" placeholder="אימייל" required />
-    <input type="password" id="password" placeholder="סיסמה" required />
-    <button id="submit-btn">התחבר</button>
-    <div class="toggle" id="toggle-form">אין לך משתמש? לחץ כאן להרשמה</div>
-    <p id="message" style="color:red;"></p>
+<body class="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-700 via-purple-700 to-pink-600">
+
+  <div class="bg-white/90 p-8 rounded-2xl shadow-2xl w-[360px]">
+    <h1 class="text-3xl font-bold text-center text-purple-700 mb-6">GameWorld</h1>
+
+    <form id="authForm" class="space-y-4">
+      <input type="email" id="email" placeholder="Email" required
+        class="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-purple-500">
+
+      <input type="password" id="password" placeholder="Password" required
+        class="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-purple-500">
+
+      <button type="submit"
+        class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 rounded-xl">
+        Login
+      </button>
+    </form>
+
+    <p class="text-center text-sm mt-4 text-gray-700">
+      <span id="toggleText">Don't have an account?</span>
+      <button id="toggleBtn" class="ml-2 text-purple-600 font-semibold hover:underline">
+        Register
+      </button>
+    </p>
   </div>
 
-  <script>
-    // הכנס את פרטי Supabase שלך
-    const SUPABASE_URL = "https://YOUR_PROJECT.supabase.co";
-    const SUPABASE_KEY = "YOUR_ANON_KEY";
-    const REDIRECT_URL = "https://shalev1912.github.io/chat-gpt/home.html";
+  <!-- Supabase -->
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const SUPABASE_URL = "https://btgqeulnetmutwufybyw.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0Z3FldWxuZXRtdXR3dWZ5Ynl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYzNzc3NjcsImV4cCI6MjA3MTk1Mzc2N30.mKT0h8unax2Rk-TnSnY-VIELdfX9IZehuYQZZdQbbR0";
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let isLogin = true;
 
-    const formTitle = document.getElementById("form-title");
-    const submitBtn = document.getElementById("submit-btn");
-    const toggleForm = document.getElementById("toggle-form");
-    const message = document.getElementById("message");
-
-    toggleForm.addEventListener("click", () => {
-      isLogin = !isLogin;
-      if (isLogin) {
-        formTitle.textContent = "התחברות";
-        submitBtn.textContent = "התחבר";
-        toggleForm.textContent = "אין לך משתמש? לחץ כאן להרשמה";
-      } else {
-        formTitle.textContent = "הרשמה";
-        submitBtn.textContent = "הרשם";
-        toggleForm.textContent = "כבר יש לך משתמש? לחץ כאן להתחברות";
+    // אם המשתמש כבר מחובר → הפניה ל-home
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        window.location.href = "https://shalev1912.github.io/chat-gpt/home.html";
       }
-      message.textContent = "";
     });
 
-    submitBtn.addEventListener("click", async () => {
+    const form = document.getElementById("authForm");
+    const toggleBtn = document.getElementById("toggleBtn");
+    const toggleText = document.getElementById("toggleText");
+
+    toggleBtn.addEventListener("click", () => {
+      isLogin = !isLogin;
+      form.querySelector("button").innerText = isLogin ? "Login" : "Register";
+      toggleText.innerText = isLogin
+        ? "Don't have an account?"
+        : "Already have an account?";
+      toggleBtn.innerText = isLogin ? "Register" : "Login";
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
-      message.textContent = "";
 
       try {
         if (isLogin) {
-          const { error } = await supabase.auth.signInWithPassword({ email, password });
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
           if (error) throw error;
+          window.location.href = "https://shalev1912.github.io/chat-gpt/home.html";
         } else {
-          const { error } = await supabase.auth.signUp({ email, password });
+          const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+          });
           if (error) throw error;
+          alert("✅ נרשמת בהצלחה! בדוק את האימייל שלך לאישור");
         }
-
-        // הפניה אחרי הצלחה
-        window.location.href = REDIRECT_URL;
       } catch (err) {
-        message.textContent = err.message;
+        alert("❌ שגיאה: " + err.message);
       }
     });
   </script>

@@ -34,16 +34,16 @@
   </div>
 
   <script>
-    // 🔹 חיבור ל-Supabase
+    // --- חיבור ל-Supabase ---
     const SUPABASE_URL = "https://btgqeulnetmutwufybyw.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0Z3FldWxuZXRtdXR3dWZ5Ynl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYzNzc3NjcsImV4cCI6MjA3MTk1Mzc2N30.mKT0h8unax2Rk-TnSnY-VIELdfX9IZehuYQZZdQbbR0";
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let isLogin = true;
 
-    // ✅ אם המשתמש כבר מחובר → נשלח ל-home.html
+    // אם המשתמש כבר מחובר -> שולחים אותו ל-home.html
     if (localStorage.getItem("user")) {
-      window.location.href = "https://shalev1912.github.io/chat-gpt/home.html";
+      window.location.href = "home.html";
     }
 
     const form = document.getElementById("authForm");
@@ -59,39 +59,47 @@
       toggleBtn.innerText = isLogin ? "Register" : "Login";
     });
 
+    async function register(email, password) {
+      const { data, error } = await client
+        .from("users")
+        .insert([{ email, password, points: 0 }])
+        .select()
+        .single();
+      if (error) throw new Error(error.message);
+      return data;
+    }
+
+    async function login(email, password) {
+      const { data, error } = await client
+        .from("users")
+        .select("*")
+        .eq("email", email)
+        .eq("password", password)
+        .single();
+      if (error || !data) throw new Error("Email or password incorrect");
+      return data;
+    }
+
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
 
       try {
+        let user;
         if (isLogin) {
-          // 🔹 התחברות
-          const { data, error } = await supabase
-            .from("users")
-            .select("*")
-            .eq("email", email)
-            .eq("password", password)
-            .single();
-
-          if (error || !data) throw new Error(error?.message || "Invalid credentials");
-          localStorage.setItem("user", JSON.stringify(data));
+          user = await login(email, password);
         } else {
-          // 🔹 הרשמה
-          const { data, error } = await supabase
-            .from("users")
-            .insert([{ email, password, points: 0 }])
-            .select()
-            .single();
-
-          if (error) throw new Error(error.message);
-          localStorage.setItem("user", JSON.stringify(data));
+          user = await register(email, password);
         }
 
-        // ✅ אחרי התחברות/הרשמה מוצלחת → מעבר לעמוד הראשי
-        window.location.href = "https://shalev1912.github.io/chat-gpt/home.html";
+        // שומרים את המשתמש ב-localStorage
+        localStorage.setItem("user", JSON.stringify(user));
+
+        // מעבירים לעמוד הבית
+        window.location.href = "home.html";
       } catch (err) {
-        alert("❌ התחברות/הרשמה נכשלה: " + err.message);
+        alert("❌ " + err.message);
       }
     });
   </script>

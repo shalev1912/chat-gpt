@@ -36,6 +36,11 @@
     const API_URL = "https://app-quiet-butterfly-34696525.dpl.myneon.app";
     let isLogin = true;
 
+    // ✅ אם המשתמש כבר מחובר → נשלח ל-home.html
+    if (localStorage.getItem("token")) {
+      window.location.href = "https://shalev1912.github.io/chat-gpt/home.html";
+    }
+
     const form = document.getElementById("authForm");
     const toggleBtn = document.getElementById("toggleBtn");
     const toggleText = document.getElementById("toggleText");
@@ -67,7 +72,7 @@
         const data = await res.json();
         localStorage.setItem("token", data.token);
 
-        // אחרי התחברות מוצלחת → מעבר לעמוד הראשי
+        // ✅ אחרי התחברות מוצלחת → מעבר לעמוד הראשי
         window.location.href = "https://shalev1912.github.io/chat-gpt/home.html";
       } catch (err) {
         alert("❌ התחברות/הרשמה נכשלה");

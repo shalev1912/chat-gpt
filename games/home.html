@@ -3,227 +3,182 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>מרכז המשחקים</title>
+  <title>ממרכז המש המשחקים</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&display=swap" rel="stylesheet">
-
   <style>
-    :root{
-      --bg1: #ff9a9e;
-      --bg2: #fad0c4;
-      --card-bg: rgba(255,255,255,0.06);
-      --glass: rgba(255,255,255,0.08);
-      --accent: #ffd166;
-      --text: #ffffff;
-    }
-
-    /* Reset */
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0}
-    body {
-      background: linear-gradient(270deg, #ff9a9e, #fad0c4, #a18cd1, #fbc1cc);
-      background-size: 800% 800%;
-      animation: gradientShift 20s ease infinite;
-      margin: 0;
-      font-family: 'Heebo', sans-serif;
-      color: white;
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
     @keyframes gradientShift {
-      0% {
-        background-position: 0% 50%;
-      }
-      50% {
-        background-position: 100% 50%;
-      }
-      100% {
-        background-position: 0% 50%;
-      }
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
-
-    header.top {
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      margin-bottom:18px;
+    
+    .gradient-bg {
+      background: linear-gradient(225deg, #667eea 0%, #764ba2 50%, #6B8DD6 100%);
+      background-size: 400% 400%;
+      animation: gradientShift 15s ease infinite;
     }
-    .brand {
-      display:flex;
-      align-items:center;
-      gap:12px;
-    }
-    .logo {
-      width:54px;height:54px;border-radius:12px;
-      background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
-      display:flex;align-items:center;justify-content:center;
-      box-shadow: inset 0 -6px 14px rgba(0,0,0,0.12);
-      flex-shrink:0;
-    }
-    .logo svg{width:34px;height:34px;opacity:0.95}
-    h1{
-      font-size:20px;margin:0;line-height:1;
-      letter-spacing:0.2px;
-    }
-    p.subtitle{margin:0;color:rgba(255,255,255,0.85);font-size:13px}
-
-    /* tools */
-    .tools {
-      display:flex;gap:8px;align-items:center;
-    }
-    .btn {
-      background:var(--glass);
-      border:1px solid rgba(255,255,255,0.06);
-      padding:8px 12px;border-radius:10px;color:var(--text);
-      text-decoration:none;font-weight:500;font-size:14px;cursor:pointer;
-      display:inline-flex;gap:8px;align-items:center;
-      transition:transform .18s ease, background .18s ease, box-shadow .18s ease;
-    }
-    .btn:active{transform:translateY(1px)}
-    .btn:hover{transform:translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.2)}
-
-    /* content grid */
-    .games {
-      display:grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap:18px;
-    }
-
-    @media (max-width:760px){
-      .games{grid-template-columns: 1fr;}
-      header.top{flex-direction:column;align-items:flex-start;gap:10px}
-    }
-
-    .card {
-      background: var(--card-bg);
-      border-radius:14px;
-      padding:14px;
-      display:flex;
-      gap:12px;
-      align-items:center;
-      transition: transform .22s cubic-bezier(.2,.9,.3,1), box-shadow .22s;
-      text-decoration:none;color:inherit;
-      border: 1px solid rgba(255,255,255,0.04);
-    }
-    .card:hover{ transform: translateY(-8px) scale(1.01); box-shadow: 0 20px 40px rgba(0,0,0,0.28)}
-    .thumb {
-      width:120px;height:88px;border-radius:10px;flex-shrink:0;
-      display:flex;align-items:center;justify-content:center;
-      background:linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
-      position:relative; overflow:hidden;
-    }
-    .thumb svg{width:80px;height:80px}
-
-    .meta{flex:1; text-align:right}
-    .meta h3{margin:0;font-size:18px}
-    .meta p{margin:6px 0 0;color:rgba(255,255,255,0.8);font-size:13px}
-
-    .play {
-      display:inline-flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;
-      background:linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
-      border:1px solid rgba(255,255,255,0.06);
-      cursor:pointer;font-weight:600;
-      transition: transform .14s ease, box-shadow .14s ease;
-    }
-    .play:active{transform:translateY(1px)}
-    .play:hover{box-shadow: 0 10px 25px rgba(0,0,0,0.28); transform:translateY(-3px)}
-
-    /* small tag */
-    .tag {
-      font-size:12px;padding:6px 8px;border-radius:8px;background:rgba(0,0,0,0.18);
-      color: #fff;border:1px solid rgba(255,255,255,0.04);
-    }
-
-    footer.sitefoot{
-      margin-top:16px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.03);
-      display:flex;gap:10px;align-items:center;justify-content:space-between;
-      font-size:13px;color:rgba(255,255,255,0.85)
-    }
-
-    /* focus styles for accessibility */
-    a:focus, button:focus { outline: 3px solid rgba(255,255,255,0.12); outline-offset:3px; border-radius:8px; }
-
-    /* decorative floating shapes */
+    
     .float-shape{
       position:absolute; border-radius:50%;
       filter: blur(28px); opacity:0.12; pointer-events:none;
     }
-    .s1{width:260px;height:260px; right:-60px; top:-80px; background: #ffffff;}
-    .s2{width:140px;height:140px; left:-40px; bottom:-40px; background:#fff;}
-    .s3{width:90px;height:90px; right:120px; bottom: -20px; background:#ffffff;}
-
-    /* particle canvas fullscreen (hidden by default) */
-    #particle-canvas{
-      position:absolute; left:0; top:0; width:100%; height:100%; pointer-events:none; z-index:0;
-      display:none;
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
     }
+    ::-webkit-scrollbar-track {
+      background: rgba(255,255,255,0.05);
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.2);
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255,255,255,0.3);
+    }
+    
+    /* Floating animations */
+    @keyframes float1 {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      50% { transform: translate(10px, 10px) rotate(2deg); }
+    }
+    @keyframes float2 {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      50% { transform: translate(-5px, -5px) rotate(-1deg); }
+    }
+    @keyframes float3 {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      50% { transform: translate(5px, 5px) rotate(1deg); }
+    }
+    .animate-float1 { animation: float1 8s ease-in-out infinite; }
+    .animate-float2 { animation: float2 10s ease-in-out infinite; }
+    .animate-float3 { animation: float3 12s ease-in-out infinite; }
 
-    /* small helper */
-    .advanced-toggle{display:flex;gap:8px;align-items:center}
-    .small-muted{font-size:12px;color:rgba(255,255,255,0.75)}
+    /* Focus styles for accessibility */
+    a:focus, button:focus {
+      outline: 3px solid rgba(255,255,255,0.12);
+      outline-offset:3px;
+      border-radius:8px;
+    }
+    
+    /* Card hover effect */
+    .card-hover {
+      transition: transform 0.3s cubic-bezier(0.2,0.9,0.3,1.3), box-shadow 0.3s;
+    }
+    .card-hover:hover {
+      transform: translateY(-10px) scale(1.03);
+      box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+      border-color: rgba(255,255,255,0.3);
+      transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+    
+    /* Play button animation */
+    .play-btn {
+      transition: all 0.2s ease;
+    }
+    .play-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.28);
+    }
+    .play-btn:active {
+      transform: translateY(1px);
+    }
+    
+    /* Particle toggle button pulse */
+    .pulse {
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.1); }
+      70% { box-shadow: 0 0 0 10px rgba(255,255,255,0); }
+      100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+    }
   </style>
 </head>
-<body>
-  <div class="wrap" role="main">
-    <!-- decorative shapes -->
-    <div class="float-shape s1"></div>
-    <div class="float-shape s2"></div>
-    <div class="float-shape s3"></div>
-
-    <header class="top">
-      <div class="brand">
-        <div class="logo" aria-hidden="true">
-          <!-- simple game controller icon -->
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<body class="gradient-bg min-h-screen flex items-center justify-center text-white font-['Heebo'] p-4 md:p-8 relative overflow-hidden">
+  <!-- Decorative floating shapes -->
+  <div class="float-shape s1 w-[260px] h-[260px] -right-[60px] -top-[80px] bg-white animate-float1"></div>
+  <div class="float-shape s2 w-[140px] h-[140px] -left-[40px] -bottom-[40px] bg-white animate-float2"></div>
+  <div class="float-shape s3 w-[90px] h-[90px] right-[120px] -bottom-[20px] bg-white animate-float3"></div>
+  
+  <!-- Main container -->
+  <div class="w-full max-w-6xl mx-auto relative z-10">
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 mb-6">
+      <div class="flex items-center gap-3">
+        <!-- Logo -->
+        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-white/10 to-white/5 shadow-[inset_0_-6px_14px_rgba(0,0,0,0.12)] flex items-center justify-center flex-shrink-0">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-9 h-9 opacity-95">
             <path d="M3 12c0 0 1.5-6 9-6s9 6 9 6-1.5 6-9 6S3 12 3 12z" stroke="white" stroke-opacity="0.92" stroke-width="1.2" fill="rgba(255,255,255,0.03)"/>
             <circle cx="8.8" cy="11.2" r="1.2" fill="white"/>
             <rect x="14.6" y="9.6" width="1.2" height="1.2" rx="0.2" fill="white"/>
             <rect x="13" y="11.2" width="1.2" height="1.2" rx="0.2" fill="white"/>
           </svg>
         </div>
+        
         <div>
-          <h1>מרכז המשחקים</h1>
-          <p class="subtitle">קישור מהיר למשחקים — קליקים, טריוויה, סודוקו, שחמט וגיטרה • עיצוב נקי ורספונסיבי</p>
+          <h1 class="text-2xl md:text-3xl font-bold m-0 leading-tight bg-gradient-to-r from-blue-300 to-purple-200 bg-clip-text text-transparent">גלריית המשחקים שלנו</h1>
+          <p class="text-sm md:text-base text-white/90 m-0">גלה עולם של משחקים מרגשים! מקצועי, מהנה ומותאם לכל הגילאים. בחר משחק והתחל לשחק עכשיו!</p>
         </div>
       </div>
-
-      <div class="tools" aria-hidden="false">
-        <div class="advanced-toggle">
-          <button id="particlesToggle" class="btn" title="הפעל/כבה אפקט חלקיקים">הפעל אפקטים</button>
-          <button id="downloadBtn" class="btn" onclick="downloadIndex()">להורדה</button>
+      
+      <!-- Tools -->
+      <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2">
+          <button id="particlesToggle" class="pulse bg-white/5 border border-white/10 px-3 py-2 rounded-lg text-white font-medium text-sm flex items-center gap-2 hover:bg-white/10 hover:-translate-y-1 transition-all duration-200 active:translate-y-0.5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles">
+              <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+              <path d="M5 3v4"/>
+              <path d="M19 17v4"/>
+              <path d="M3 5h4"/>
+              <path d="M17 19h4"/>
+            </svg>
+            ה הפעל אפקטים
+          </button>
+          <button id="downloadBtn" class="bg-white/5 border border-white/10 px-3 py-2 rounded-lg text-white font-medium text-sm flex items-center gap-2 hover:bg-white/10 hover:-translate-y-1 transition-all duration-200 active:translate-y-0.5" onclick="downloadIndex()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" x2="12" y1="15" y2="3"/>
+            </svg>
+            הורד
+          </button>
         </div>
       </div>
     </header>
-
-    <section class="games" aria-label="רשימת משחקים">
-      <!-- Clicker Card -->
-      <a class="card" href="click.html" role="link" aria-label="פתח משחק הקליקים">
-        <div class="thumb" aria-hidden="true">
-          <!-- clicker SVG -->
-          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    
+    <!-- Games Grid -->
+    <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+      <!-- Clicker Game -->
+      <a href="click.html" class="card-hover bg-gradient-to-br from-white/5 to-white/3 border border-white/20 rounded-2xl p-5 flex gap-4 items-center no-underline text-white hover:shadow-lg transition-all duration-300">
+        <div class="w-28 h-20 rounded-lg bg-gradient-to-b from-white/5 to-white/3 flex items-center justify-center flex-shrink-0 relative overflow-hidden">
+          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" class="w-16 h-16">
             <rect x="4" y="4" width="56" height="56" rx="10" fill="rgba(255,255,255,0.06)"/>
             <path d="M20 40 L24 36 L28 40 L32 36 L36 40" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" fill="none" />
             <circle cx="40" cy="22" r="8" fill="white" opacity="0.95"/>
             <path d="M36 22h2v2h-2z" fill="#333" />
           </svg>
         </div>
-        <div class="meta">
-          <h3>משחק הקליקים</h3>
-          <p>לחץ וצבור נקודות — שדרוגים, אפקטים ומהר!</p>
+        <div class="flex-1 text-right">
+          <h3 class="text-lg md:text-xl font-bold m-0">משחק הקליקים</h3>
+          <p class="text-sm text-white/80 m-0 mt-1">ללחץ וצבור נקודות — ש שדרוגים, א אפקטים ומ ומהר!</p>
         </div>
-        <div>
-          <div class="play">שחק ▶</div>
+        <div class="play-btn bg-white/5 border border-white/10 px-3 py-2 rounded-lg flex items-center gap-2 font-semibold text-sm">
+          שחק
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-play">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
         </div>
       </a>
-
-      <!-- Trivia Card -->
-      <a class="card" href="trivia.html" role="link" aria-label="פתח משחק הטריוויה">
-        <div class="thumb" aria-hidden="true">
-          <!-- trivia SVG -->
-          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      
+      <!-- Trivia Game -->
+      <a href="trivia.html" class="card-hover bg-white/5 border border-white/10 rounded-xl p-4 flex gap-3 items-center no-underline text-white hover:shadow-lg">
+        <div class="w-28 h-20 rounded-lg bg-gradient-to-b from-white/5 to-white/3 flex items-center justify-center flex-shrink-0 relative overflow-hidden">
+          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" class="w-16 h-16">
             <rect x="4" y="4" width="56" height="56" rx="10" fill="rgba(255,255,255,0.06)"/>
             <path d="M20 38h24v2H20z" fill="white"/>
             <circle cx="34" cy="22" r="8" fill="white" opacity="0.95"/>
@@ -231,59 +186,65 @@
             <circle cx="34" cy="30" r="1.6" fill="#333"/>
           </svg>
         </div>
-        <div class="meta">
-          <h3>משחק הטריוויה</h3>
-          <p>ענה על שאלות, בדוק ידע וזכה בנקודות!</p>
+        <div class="flex-1 text-right">
+          <h3 class="text-lg md:text-xl font-bold m-0">משחק הטריוויה</h3>
+          <p class="text-sm text-white/80 m-0 mt-1">ענה על שאלות, בדוק ידע וזכה בנקודות!</p>
         </div>
-        <div>
-          <div class="play">שחק ▶</div>
+        <div class="play-btn bg-white/5 border border-white/10 px-3 py-2 rounded-lg flex items-center gap-2 font-semibold text-sm">
+          ש שחק
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-play">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
         </div>
       </a>
-
-      <!-- Sudoku Card -->
-      <a class="card" href="sudoku.html" role="link" aria-label="פתח משחק הסודוקו">
-        <div class="thumb" aria-hidden="true">
-          <!-- sudoku SVG (custom icon) -->
-          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" fill="none" stroke="white" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+      
+      <!-- Sudoku Game -->
+      <a href="sudoku.html" class="card-hover bg-white/5 border border-white/10 rounded-xl p-4 flex gap-3 items-center no-underline text-white hover:shadow-lg">
+        <div class="w-28 h-20 rounded-lg bg-gradient-to-b from-white/5 to-white/3 flex items-center justify-center flex-shrink-0 relative overflow-hidden">
+          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" class="w-16 h-16" fill="none" stroke="white" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
             <rect x="6" y="6" width="52" height="52" rx="6" fill="rgba(255,255,255,0.06)"/>
             <path d="M26 6v52M38 6v52M6 26h52M6 38h52" />
             <circle cx="16" cy="16" r="3" fill="white" stroke="none"/>
             <circle cx="48" cy="48" r="3" fill="white" stroke="none"/>
           </svg>
         </div>
-        <div class="meta">
-          <h3>משחק סודוקו</h3>
-          <p>פתור אתגרי סודוקו ברמות קושי שונות!</p>
+        <div class="flex-1 text-right">
+          <h3 class="text-lg md:text-xl font-bold m-0">ממשחק סודוקו</h3>
+          <p class="text-sm text-white/80 m-0 mt-1">פתור א אתגרי סודוקו בר ברמות קושי שונות!</p>
         </div>
-        <div>
-          <div class="play">שחק ▶</div>
+        <div class="play-btn bg-white/5 border border-white/10 px-3 py-2 rounded-lg flex items-center gap-2 font-semibold text-sm">
+          שחק
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-play">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
         </div>
       </a>
-
-      <!-- Chess Card -->
-      <a class="card" href="chess.html" role="link" aria-label="פתח משחק השחמט">
-        <div class="thumb" aria-hidden="true">
-          <!-- chess SVG icon (custom) -->
-          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" fill="none" stroke="white" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+      
+      <!-- Chess Game -->
+      <a href="chess.html" class="card-hover bg-white/5 border border-white/10 rounded-xl p-4 flex gap-3 items-center no-underline text-white hover:shadow-lg">
+        <div class="w-28 h-20 rounded-lg bg-gradient-to-b from-white/5 to-white/3 flex items-center justify-center flex-shrink-0 relative overflow-hidden">
+          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" class="w-16 h-16" fill="none" stroke="white" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
             <path d="M20 52h24M28 44h8M24 36h16M32 16v20" />
             <rect x="18" y="12" width="28" height="8" fill="rgba(255,255,255,0.06)" rx="4" ry="4"/>
             <circle cx="32" cy="26" r="4" fill="white" opacity="0.9"/>
           </svg>
         </div>
-        <div class="meta">
-          <h3>משחק השחמט</h3>
-          <p>שחק שחמט עם עיצוב נקי ומאתגר!</p>
+        <div class="flex-1 text-right">
+          <h3 class="text-lg md:text-xl font-bold m-0">ממשחק השחמט</h3>
+          <p class="text-sm text-white/80 m-0 mt-1">שחק שחמט עם עיצוב נקי ומאתגר!</p>
         </div>
-        <div>
-          <div class="play">שחק ▶</div>
+        <div class="play-btn bg-white/5 border border-white/10 px-3 py-2 rounded-lg flex items-center gap-2 font-semibold text-sm">
+          שחק
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-play">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
         </div>
       </a>
-
-      <!-- Guitar Master Card -->
-      <a class="card" href="guitar-master.html" role="link" aria-label="פתח גיטרה מאסטר">
-        <div class="thumb" aria-hidden="true">
-          <!-- guitar SVG icon -->
-          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" fill="none" stroke="white" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+      
+      <!-- Guitar Master -->
+      <a href="guitar-master.html" class="card-hover bg-white/5 border border-white/10 rounded-xl p-4 flex gap-3 items-center no-underline text-white hover:shadow-lg">
+        <div class="w-28 h-20 rounded-lg bg-gradient-to-b from-white/5 to-white/3 flex items-center justify-center flex-shrink-0 relative overflow-hidden">
+          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" class="w-16 h-16" fill="none" stroke="white" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
             <path d="M12 40c0 0 8-4 20-4s20 4 20 4" />
             <path d="M12 40v8c0 2 2 4 4 4h32c2 0 4-2 4-4v-8" />
             <circle cx="32" cy="24" r="8" fill="rgba(255,255,255,0.06)"/>
@@ -292,44 +253,106 @@
             <path d="M16 36h32" stroke="white" stroke-width="1.5"/>
           </svg>
         </div>
-        <div class="meta">
-          <h3>גיטרה מאסטר</h3>
-          <p>אקורדים ושירים לגיטרה עם יוטיוב!</p>
+        <div class="flex-1 text-right">
+          <h3 class="text-lg md:text-xl font-bold m-0">גיטרה מאסטר</h3>
+          <p class="text-sm text-white/80 m-0 mt-1">אאקורדים ושירים לגיטרה עם יוטיוב!</p>
         </div>
-        <div>
-          <div class="play">שחק ▶</div>
+        <div class="play-btn bg-white/5 border border-white/10 px-3 py-2 rounded-lg flex items-center gap-2 font-semibold text-sm">
+          ש שחק
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-play">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+        </div>
+      </a>
+      
+      <!-- Memory Game (New Addition) -->
+      <a href="memory.html" class="card-hover bg-white/5 border border-white/10 rounded-xl p-4 flex gap-3 items-center no-underline text-white hover:shadow-lg">
+        <div class="w-28 h-20 rounded-lg bg-gradient-to-b from-white/5 to-white/3 flex items-center justify-center flex-shrink-0 relative overflow-hidden">
+          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" class="w-16 h-16" fill="none" stroke="white" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+            <rect x="4" y="4" width="56" height="56" rx="10" fill="rgba(255,255,255,0.06)"/>
+            <rect x="12" y="12" width="16" height="16" rx="4" fill="white" opacity="0.9"/>
+            <rect x="36" y="12" width="16" height="16" rx="4" fill="white" opacity="0.9"/>
+            <rect x="12" y="36" width="16" height="16" rx="4" fill="white" opacity="0.9"/>
+            <rect x="36" y="36" width="16" height="16" rx="4" fill="white" opacity="0.9"/>
+          </svg>
+        </div>
+        <div class="flex-1 text-right">
+          <h3 class="text-lg md:text-xl font-bold m-0">ממשחק הזיכרון</h3>
+          <p class="text-sm text-white/80 m-0 mt-1">ממצא את הזוגות המתאימים בזמן ה הקצר ביותר!</p>
+        </div>
+        <div class="play-btn bg-white/5 border border-white/10 px-3 py-2 rounded-lg flex items-center gap-2 font-semibold text-sm">
+          שחק
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-play">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
         </div>
       </a>
     </section>
-
-    <footer class="sitefoot">
-      <div>© <span id="year"></span> כל הזכויות שמורות • <span class="small-muted">שמור לך כעת</span></div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <span class="tag">גרסה: 1.0</span>
+    
+    <!-- Footer -->
+    <footer class="mt-6 pt-4 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-white/85">
+      <div>© <span id="year"></span> כל הזכויות שמורות • <span class="text-xs text-white/75">ששמור ל לך כ כעת</span></div>
+      <div class="flex items-center gap-2">
+        <span class="bg-black/20 border border-white/10 px-2 py-1 rounded-lg text-xs">גרסה: 1.1</span>
+        <button id="themeToggle" class="bg-white/5 border border-white/10 p-1 rounded-lg hover:bg-white/10 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-moon">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+          </svg>
+        </button>
       </div>
     </footer>
-
-    <!-- particle canvas -->
-    <canvas id="particle-canvas" aria-hidden="true"></canvas>
   </div>
-
+  
+  <!-- Particle Canvas -->
+  <canvas id="particle-canvas" class="absolute inset-0 w-full h-full pointer-events-none z-0 hidden"></canvas>
+  
   <script>
-    // set year
+    // Set current year
     document.getElementById('year').textContent = new Date().getFullYear();
-
+    
+    // Theme toggle
+    const themeToggle = document.getElementById('themeToggle');
+    themeToggle.addEventListener('click', () => {
+      document.body.classList.toggle('dark');
+      if (document.body.classList.contains('dark')) {
+        document.body.style.background = '#111827';
+        themeToggle.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2"/>
+            <path d="M12 20v2"/>
+            <path d="m4.93 4.93 1.41 1.41"/>
+            <path d="m17.66 17.66 1.41 1.41"/>
+            <path d="M2 12h2"/>
+            <path d="M20 12h2"/>
+            <path d="m6.34 17.66-1.41 1.41"/>
+            <path d="m19.07 4.93-1.41 1.41"/>
+          </svg>
+        `;
+      } else {
+        document.body.style.background = '';
+        themeToggle.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-moon">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+          </svg>
+        `;
+      }
+    });
+    
     // Particle effect (simple) - toggleable
     const canvas = document.getElementById('particle-canvas');
     const ctx = canvas.getContext('2d');
     let particlesEnabled = false;
     let particles = [];
-
+    let animationFrameId = null;
+    
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
-
+    
     function createParticle() {
       return {
         x: Math.random() * canvas.width,
@@ -340,41 +363,85 @@
         alpha: 0.15
       };
     }
-
+    
     function initParticles(num = 80) {
       particles = [];
       for (let i = 0; i < num; i++) {
         particles.push(createParticle());
       }
     }
-
+    
     function drawParticles() {
-      if (!particlesEnabled) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       for (let p of particles) {
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(255,255,255,${p.alpha})`;
         ctx.fill();
-
+        
         p.x += p.speedX;
         p.y += p.speedY;
-
+        
         if (p.x < 0 || p.x > canvas.width) p.speedX *= -1;
         if (p.y < 0 || p.y > canvas.height) p.speedY *= -1;
       }
-      requestAnimationFrame(drawParticles);
+      animationFrameId = requestAnimationFrame(drawParticles);
     }
-
+    
     document.getElementById('particlesToggle').addEventListener('click', () => {
       particlesEnabled = !particlesEnabled;
+      const btn = document.getElementById('particlesToggle');
+      
       if (particlesEnabled) {
         canvas.style.display = 'block';
         initParticles();
         drawParticles();
+        btn.classList.add('bg-white/10');
+        btn.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles">
+            <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+            <path d="M5 3v4"/>
+            <path d="M19 17v4"/>
+            <path d="M3 5h4"/>
+            <path d="M17 19h4"/>
+          </svg>
+          כבה א אפקטים
+        `;
       } else {
         canvas.style.display = 'none';
+        cancelAnimationFrame(animationFrameId);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        btn.classList.remove('bg-white/10');
+        btn.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles">
+            <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+            <path d="M5 3v4"/>
+            <path d="M19 17v4"/>
+            <path d="M3 5h4"/>
+            <path d="M17 19h4"/>
+          </svg>
+          ה הפעל אפקטים
+        `;
       }
     });
+    
+    // Download function (placeholder)
+    function downloadIndex() {
+      alert('תכונת ההורדה תהיה זמינה בגרסה הבאה!');
+    }
+    
+    // Add hover effect to all cards
+    document.querySelectorAll('.card-hover').forEach(card => {
+      card.addEventListener('mouseenter', () => {
+        card.style.transform = 'translateY(-8px) scale(1.02)';
+        card.style.boxShadow = '0 20px 40px rgba(0,0,0,0.28)';
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = '';
+        card.style.boxShadow = '';
+      });
+    });
+  </script>
+</body>
+</html>
 

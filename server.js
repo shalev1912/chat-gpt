@@ -13,7 +13,71 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 3000;
 
+// YouTube API key: must be provided via environment variable (no fallback)
+require('dotenv').config();
+const YT_API_KEY = process.env.YT_API_KEY;
+if (!YT_API_KEY) {
+	console.error('Missing YT_API_KEY environment variable. Please set it in your environment or .env file.');
+	process.exit(1);
+}
+
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Serve the games folder so client can open pages like /games/guitar-master.html
+app.use('/games', express.static(path.join(__dirname, 'games')));
+
+// --- YouTube proxy endpoints ---
+// GET /api/youtube/video?id=VIDEO_ID
+// returns { ok:true, item: <videos.list item> } or { ok:false }
+app.get('/api/youtube/video', async (req, res) => {
+	const id = req.query.id;
+	if(!id) return res.status(400).json({ ok:false, error: 'missing id' });
+	try{
+		const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,status&id=${encodeURIComponent(id)}&key=${YT_API_KEY}`;
+		const r = await fetch(url);
+		if(!r.ok) return res.status(r.status).json({ ok:false });
+		const j = await r.json();
+		if(!j.items || j.items.length===0) return res.json({ ok:false, items: [] });
+		return res.json({ ok:true, items: j.items });
+	}catch(err){
+		console.error('youtube.video proxy error', err);
+		return res.status(500).json({ ok:false, error: String(err) });
+	}
+});
+
+// GET /api/youtube/captions?videoId=...&lang=he
+// Attempts to fetch timedtext and returns parsed cues: [{start,dur,text}, ...]
+app.get('/api/youtube/captions', async (req,res)=>{
+	const vid = req.query.videoId;
+	const lang = req.query.lang || 'he';
+	if(!vid) return res.status(400).json({ ok:false, error:'missing videoId' });
+	try{
+		// Try the public timedtext endpoint
+		const url = `https://video.google.com/timedtext?lang=${encodeURIComponent(lang)}&v=${encodeURIComponent(vid)}`;
+		const r = await fetch(url);
+		if(!r.ok) return res.status(502).json({ ok:false });
+		const txt = await r.text();
+		if(!txt || txt.trim()==='') return res.json({ ok:true, cues: [] });
+
+		// crude XML parse for <text start="..." dur="...">content</text>
+		const cues = [];
+		const re = /<text([^>]*)>([\s\S]*?)<\/text>/g;
+		let m;
+		while((m = re.exec(txt)) !== null){
+			const attrs = m[1];
+			const content = m[2].replace(/\n/g,' ').replace(/&amp;/g,'&').replace(/&quot;/g,'"');
+			const startMatch = /start="([^"]+)"/.exec(attrs);
+			const durMatch = /dur="([^"]+)"/.exec(attrs);
+			const start = startMatch ? parseFloat(startMatch[1]) : 0;
+			const dur = durMatch ? parseFloat(durMatch[1]) : 0;
+			cues.push({ start, dur, text: content });
+		}
+		return res.json({ ok:true, cues });
+	}catch(err){
+		console.error('captions proxy error', err);
+		return res.status(500).json({ ok:false, error:String(err) });
+	}
+});
 
 /**
  * Simple 2-player matchmaking with per-room authoritative game loop.

@@ -45,7 +45,7 @@
     // אם המשתמש כבר מחובר → הפניה ל-home
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
-        window.location.href = "https://shalev1912.github.io/chat-gpt/home.html";
+        window.location.href = "https://shalev1912.github.io/chat-gpt/games/home.html";
       }
     });
 

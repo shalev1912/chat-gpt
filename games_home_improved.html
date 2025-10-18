@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>גלריית המשחקים שלנו - משחקים מרגשים בחינם</title>
+    <meta name="description" content="אוסף משחקים מקוונים מרגשים - משחקי חשיבה, פאזלים, אקשן ועוד. שחק בחינם ישירות מהדפדפן!">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            text-align: center;
+            padding: 60px 20px 40px;
+            animation: fadeInDown 1s ease;
+        }
+
+        h1 {
+            font-size: 3.5em;
+            margin-bottom: 20px;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            background: linear-gradient(45deg, #fff, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.3em;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+
+        .search-box {
+            max-width: 500px;
+            margin: 0 auto 30px;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 15px 50px 15px 20px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1em;
+            background: rgba(255,255,255,0.95);
+            color: #333;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+            transform: translateY(-2px);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2em;
+            color: #667eea;
+        }
+
+        .filters {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+        }
+
+        .filter-btn {
+            padding: 12px 30px;
+            border: 2px solid rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1em;
+            backdrop-filter: blur(10px);
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: rgba(255,255,255,0.25);
+            border-color: rgba(255,255,255,0.6);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 30px;
+            padding: 20px 0;
+        }
+
+        .game-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: all 0.4s;
+            cursor: pointer;
+            animation: fadeInUp 0.6s ease;
+            position: relative;
+        }
+
+        .game-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        }
+
+        .game-header {
+            height: 180px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4em;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .game-body {
+            padding: 25px;
+            color: #333;
+        }
+
+        .game-title {
+            font-size: 1.6em;
+            margin-bottom: 12px;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .game-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .game-tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .tag {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+        }
+
+        .game-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .rating {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #ffd700;
+        }
+
+        .play-count {
+            color: #999;
+            font-size: 0.9em;
+        }
+
+        .play-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+
+        .play-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .theme-toggle {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            backdrop-filter: blur(10px);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8em;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1) rotate(180deg);
+            background: rgba(255,255,255,0.3);
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            font-size: 1.5em;
+            opacity: 0.8;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        body.dark-mode {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+
+        body.dark-mode .game-card {
+            background: rgba(30,30,50,0.95);
+        }
+
+        body.dark-mode .game-body {
+            color: #fff;
+        }
+
+        body.dark-mode .game-title {
+            color: #8b9aff;
+        }
+
+        body.dark-mode .game-description {
+            color: #ccc;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5em;
+            }
+
+            .games-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filters {
+                gap: 10px;
+            }
+
+            .filter-btn {
+                padding: 10px 20px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+    
+    <div class="container">
+        <header>
+            <h1>🎮 גלריית המשחקים שלנו</h1>
+            <p class="subtitle">גלה עולם של משחקים מרגשים! מקצועי, מהנה ומותאם לכל הגילאים</p>
+            
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" placeholder="חפש משחק...">
+            </div>
+
+            <div class="filters">
+                <button class="filter-btn active" data-filter="all">הכל</button>
+                <button class="filter-btn" data-filter="חשיבה">חשיבה</button>
+                <button class="filter-btn" data-filter="אקשן">אקשן</button>
+                <button class="filter-btn" data-filter="פאזל">פאזל</button>
+                <button class="filter-btn" data-filter="מוזיקה">מוזיקה</button>
+            </div>
+        </header>
+
+        <div class="games-grid" id="gamesGrid"></div>
+        <div class="no-results" id="noResults" style="display: none;">
+            😢 לא נמצאו משחקים מתאימים
+        </div>
+    </div>
+
+    <button class="theme-toggle" id="themeToggle">🌙</button>
+
+    <script>
+        const games = [
+            {
+                title: "Clicker Game",
+                description: "לחץ וצבור נקודות! שדרוג אוטומטי, אפקטים ויזואליים ומהירות מטורפת!",
+                icon: "👆",
+                tags: ["אקשן", "מזדמן"],
+                rating: 4.8,
+                plays: "2.5K",
+                url: "clicker.html",
+                gradient: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
+            },
+            {
+                title: "Quiz Game",
+                description: "ענה על שאלות מאתגרות, בדוק את הידע שלך וצבור נקודות!",
+                icon: "❓",
+                tags: ["חשיבה", "חינוכי"],
+                rating: 4.6,
+                plays: "1.8K",
+                url: "quiz.html",
+                gradient: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)"
+            },
+            {
+                title: "Sudoku",
+                description: "פתור אתגרי סודוקו קלאסיים ברמות קושי שונות - מקל ועד מומחה!",
+                icon: "🔢",
+                tags: ["פאזל", "חשיבה"],
+                rating: 4.9,
+                plays: "3.2K",
+                url: "sudoku.html",
+                gradient: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)"
+            },
+            {
+                title: "Chess",
+                description: "שחמט קלאסי עם עיצוב נקי ומודרני. שחק מול חבר או תרגל לבד!",
+                icon: "♟️",
+                tags: ["אסטרטגיה", "חשיבה"],
+                rating: 4.7,
+                plays: "2.1K",
+                url: "chess.html",
+                gradient: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)"
+            },
+            {
+                title: "Guitar Chords",
+                description: "למד אקורדים ושירים לגיטרה עם סרטוני יוטיוב משולבים!",
+                icon: "🎸",
+                tags: ["מוזיקה", "חינוכי"],
+                rating: 4.5,
+                plays: "1.5K",
+                url: "guitar.html",
+                gradient: "linear-gradient(135deg, #30cfd0 0%, #330867 100%)"
+            },
+            {
+                title: "Memory Game",
+                description: "מצא את כל הזוגות המתאימים בזמן הקצר ביותר! שפר את הזיכרון שלך!",
+                icon: "🧠",
+                tags: ["פאזל", "חשיבה"],
+                rating: 4.4,
+                plays: "1.9K",
+                url: "memory.html",
+                gradient: "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)"
+            }
+        ];
+
+        let currentFilter = 'all';
+        let searchTerm = '';
+
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.width = Math.random() * 3 + 'px';
+                star.style.height = star.style.width;
+                star.style.right = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                starsContainer.appendChild(star);
+            }
+        }
+
+        function renderGames() {
+            const grid = document.getElementById('gamesGrid');
+            const noResults = document.getElementById('noResults');
+            
+            let filteredGames = games.filter(game => {
+                const matchesFilter = currentFilter === 'all' || game.tags.includes(currentFilter);
+                const matchesSearch = game.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                    game.description.toLowerCase().includes(searchTerm.toLowerCase());
+                return matchesFilter && matchesSearch;
+            });
+
+            if (filteredGames.length === 0) {
+                grid.style.display = 'none';
+                noResults.style.display = 'block';
+                return;
+            }
+
+            grid.style.display = 'grid';
+            noResults.style.display = 'none';
+
+            grid.innerHTML = filteredGames.map((game, index) => `
+                <div class="game-card" style="animation-delay: ${index * 0.1}s" onclick="window.location.href='${game.url}'">
+                    <div class="game-header" style="background: ${game.gradient}">
+                        <span style="position: relative; z-index: 1;">${game.icon}</span>
+                    </div>
+                    <div class="game-body">
+                        <h3 class="game-title">${game.title}</h3>
+                        <p class="game-description">${game.description}</p>
+                        <div class="game-tags">
+                            ${game.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                        </div>
+                        <div class="game-stats">
+                            <div class="rating">
+                                <span>⭐</span>
+                                <span>${game.rating}</span>
+                            </div>
+                            <div class="play-count">👥 ${game.plays} משחקים</div>
+                        </div>
+                        <button class="play-btn" onclick="event.stopPropagation(); window.location.href='${game.url}'">
+                            שחק עכשיו! 🎮
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentFilter = this.dataset.filter;
+                renderGames();
+            });
+        });
+
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            searchTerm = e.target.value;
+            renderGames();
+        });
+
+        document.getElementById('themeToggle').addEventListener('click', function() {
+            document.body.classList.toggle('dark-mode');
+            this.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
+        });
+
+        createStars();
+        renderGames();
+    </script>
+</body>
+</html>
